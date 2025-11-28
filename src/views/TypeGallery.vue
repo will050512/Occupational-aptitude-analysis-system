@@ -2,32 +2,24 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAllTypes, type PersonalityType } from '@/data/personality-types'
-import { StorageService } from '@/services/StorageService'
 
 const router = useRouter()
 
 // 獲取所有類型
 const allTypes = getAllTypes()
 
-// 已解鎖的類型
-const unlockedTypes = ref<string[]>([...StorageService.getUnlockedTypes()])
-
 // 當前選中的類型
 const selectedType = ref<PersonalityType | null>(null)
 
-// 篩選選項
-const filterOption = ref<'all' | 'unlocked' | 'locked'>('all')
+// 篩選選項（按 DISC 類型）
+const filterOption = ref<'all' | 'D' | 'I' | 'S' | 'C'>('all')
 
 // 篩選後的類型
 const filteredTypes = computed(() => {
-  switch (filterOption.value) {
-    case 'unlocked':
-      return allTypes.filter(t => unlockedTypes.value.includes(t.id))
-    case 'locked':
-      return allTypes.filter(t => !unlockedTypes.value.includes(t.id))
-    default:
-      return allTypes
+  if (filterOption.value === 'all') {
+    return allTypes
   }
+  return allTypes.filter(t => t.discPrimary === filterOption.value)
 })
 
 // 按 DISC 類型分組
@@ -57,16 +49,9 @@ const discInfo: Record<string, { name: string; description: string; color: strin
   C: { name: '謹慎型', description: '分析嚴謹、追求完美、重視品質', color: 'blue' }
 }
 
-// 是否已解鎖
-function isUnlocked(typeId: string): boolean {
-  return unlockedTypes.value.includes(typeId)
-}
-
-// 選擇類型
+// 選擇類型（所有類型都可以直接查看）
 function selectType(type: PersonalityType) {
-  if (isUnlocked(type.id)) {
-    selectedType.value = type
-  }
+  selectedType.value = type
 }
 
 // 關閉詳情
@@ -84,8 +69,7 @@ function goHome() {
   router.push('/')
 }
 
-// 解鎖數量
-const unlockedCount = computed(() => unlockedTypes.value.length)
+// 類型總數
 const totalCount = allTypes.length
 </script>
 
@@ -99,12 +83,10 @@ const totalCount = allTypes.length
           <span class="back-text">返回</span>
         </button>
         
-        <h1 class="header-title">類型圖鑑</h1>
+        <h1 class="header-title">人格圖鑑</h1>
         
-        <div class="unlock-count">
-          <span class="count-current">{{ unlockedCount }}</span>
-          <span class="count-sep">/</span>
-          <span class="count-total">{{ totalCount }}</span>
+        <div class="type-count">
+          <span class="count-total">{{ totalCount }} 種類型</span>
         </div>
       </div>
     </header>
@@ -115,11 +97,13 @@ const totalCount = allTypes.length
         <button
           v-for="option in [
             { value: 'all', label: '全部' },
-            { value: 'unlocked', label: '已解鎖' },
-            { value: 'locked', label: '未解鎖' }
+            { value: 'D', label: '🔴 主導型' },
+            { value: 'I', label: '🟡 影響型' },
+            { value: 'S', label: '🟢 穩定型' },
+            { value: 'C', label: '🔵 謹慎型' }
           ]"
           :key="option.value"
-          @click="filterOption = option.value as 'all' | 'unlocked' | 'locked'"
+          @click="filterOption = option.value as 'all' | 'D' | 'I' | 'S' | 'C'"
           class="filter-btn"
           :class="{ active: filterOption === option.value }"
         >
@@ -148,28 +132,13 @@ const totalCount = allTypes.length
             :key="type.id"
             @click="selectType(type)"
             class="type-card"
-            :class="{ locked: !isUnlocked(type.id) }"
-            :disabled="!isUnlocked(type.id)"
           >
-            <!-- 已解鎖的卡片 -->
-            <template v-if="isUnlocked(type.id)">
-              <div class="card-accent" :style="{ backgroundColor: type.color }"></div>
-              <div class="card-content">
-                <span class="type-icon">{{ type.icon }}</span>
-                <p class="type-name">{{ type.name }}</p>
-                <p class="type-tagline">{{ type.tagline }}</p>
-              </div>
-            </template>
-
-            <!-- 未解鎖的卡片 -->
-            <template v-else>
-              <div class="card-accent locked"></div>
-              <div class="card-content">
-                <span class="type-icon locked">🔒</span>
-                <p class="type-name locked">???</p>
-                <p class="type-tagline locked">尚未解鎖</p>
-              </div>
-            </template>
+            <div class="card-accent" :style="{ backgroundColor: type.color }"></div>
+            <div class="card-content">
+              <span class="type-icon">{{ type.icon }}</span>
+              <p class="type-name">{{ type.name }}</p>
+              <p class="type-tagline">{{ type.tagline }}</p>
+            </div>
           </button>
         </div>
       </div>
@@ -314,24 +283,15 @@ const totalCount = allTypes.length
   color: var(--color-text-primary);
 }
 
-.unlock-count {
+.type-count {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   font-size: var(--text-sm);
 }
 
-.count-current {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.count-sep {
-  color: var(--color-text-muted);
-  margin: 0 2px;
-}
-
 .count-total {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 /* Filter */
@@ -434,27 +394,17 @@ const totalCount = allTypes.length
   -webkit-tap-highlight-color: transparent;
 }
 
-.type-card:not(.locked):hover {
+.type-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.type-card:not(.locked):active {
+.type-card:active {
   transform: scale(0.98);
-}
-
-.type-card.locked {
-  background: var(--color-bg-secondary);
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .card-accent {
   height: 6px;
-}
-
-.card-accent.locked {
-  background: var(--color-bg-tertiary);
 }
 
 .card-content {
@@ -468,19 +418,11 @@ const totalCount = allTypes.length
   margin-bottom: var(--spacing-xs);
 }
 
-.type-icon.locked {
-  opacity: 0.3;
-}
-
 .type-name {
   font-weight: 600;
   font-size: var(--text-sm);
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-xs);
-}
-
-.type-name.locked {
-  color: var(--color-text-muted);
 }
 
 .type-tagline {
@@ -490,10 +432,6 @@ const totalCount = allTypes.length
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.type-tagline.locked {
-  color: var(--color-text-muted);
 }
 
 /* Empty State */

@@ -432,6 +432,15 @@ onMounted(() => {
             </button>
           </div>
         </div>
+
+        <!-- 公司品牌資訊 -->
+        <footer class="result-footer">
+          <div class="company-branding">
+            <img src="@/logo/愛放學CIS-15(長).png" alt="萬里遊科技" class="company-logo" />
+          </div>
+          <p class="company-info">萬里遊科技股份有限公司 © 2025</p>
+          <p class="powered-by">Powered by 新語市職涯探索</p>
+        </footer>
       </main>
     </div>
 
@@ -995,6 +1004,38 @@ onMounted(() => {
 .toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(20px);
+}
+
+/* 公司品牌資訊 */
+.result-footer {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+  border-top: 1px solid rgba(139, 115, 85, 0.15);
+}
+
+.result-footer .company-branding {
+  margin-bottom: var(--spacing-md);
+}
+
+.result-footer .company-logo {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.result-footer .company-info {
+  color: #5D4E37;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.result-footer .powered-by {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  margin: 0;
 }
 
 /* 響應式 - 平板以上 */

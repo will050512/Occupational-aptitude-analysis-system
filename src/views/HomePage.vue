@@ -82,7 +82,11 @@
 
       <!-- 版本資訊 -->
       <footer class="app-footer">
-        <p>新語市 v1.0 © 2025</p>
+        <div class="company-branding">
+          <img src="@/logo/愛放學CIS-15(長).png" alt="萬里遊科技" class="company-logo" />
+        </div>
+        <p class="company-info">萬里遊科技股份有限公司 © 2025</p>
+        <p class="app-version">新語市職涯探索 v1.0</p>
       </footer>
     </div>
   </div>
@@ -407,9 +411,37 @@ const continueGame = () => {
 /* 版本資訊 */
 .app-footer {
   text-align: center;
-  padding: var(--spacing-md) 0;
+  padding: var(--spacing-lg) 0;
+  margin-top: var(--spacing-xl);
+}
+
+.company-branding {
+  margin-bottom: var(--spacing-md);
+}
+
+.company-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 0.3s;
+}
+
+.company-logo:hover {
+  opacity: 1;
+}
+
+.company-info {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.app-version {
   color: var(--color-text-muted);
   font-size: var(--text-xs);
+  margin: 0;
 }
 
 /* 動畫 */

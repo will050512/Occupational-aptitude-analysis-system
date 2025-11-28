@@ -6,6 +6,7 @@
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { PersonalityType } from '@/data/personality-types'
+import { companyInfo, getLogoBase64 } from '@/assets/company-logo'
 
 export interface PdfReportData {
   nickname: string
@@ -136,10 +137,20 @@ function getCareers(typeId: string): { title: string; match: number }[] {
 }
 
 export class PdfGenerator {
+  private logoBase64: string = ''
+
   /**
    * 生成並下載 PDF 報告
    */
   async generateReport(data: PdfReportData): Promise<void> {
+    // 預先載入 Logo
+    try {
+      this.logoBase64 = await getLogoBase64()
+    } catch (error) {
+      console.warn('Failed to load company logo:', error)
+      this.logoBase64 = ''
+    }
+
     // 創建臨時容器
     const container = document.createElement('div')
     container.style.cssText = `
@@ -274,8 +285,14 @@ export class PdfGenerator {
           </div>
         </div>
 
+        <!-- 公司品牌 Logo -->
+        <div style="position: absolute; bottom: 70px; left: 0; right: 0; text-align: center;">
+          ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 50px; width: auto;" />` : ''}
+          <p style="color: #8B7355; font-size: 12px; margin-top: 8px; letter-spacing: 1px;">${companyInfo.name}</p>
+        </div>
+
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;">
+        <div style="position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;">
           <span style="color: #8B7355; font-size: 14px; letter-spacing: 1px;">- 1 -</span>
         </div>
       </div>
@@ -732,8 +749,14 @@ export class PdfGenerator {
           </p>
         </div>
 
+        <!-- 公司品牌 Logo -->
+        <div style="position: absolute; bottom: 65px; left: 0; right: 0; text-align: center;">
+          ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 45px; width: auto;" />` : ''}
+          <p style="color: #8B7355; font-size: 11px; margin-top: 6px; letter-spacing: 0.5px;">${companyInfo.name} © ${new Date().getFullYear()}</p>
+        </div>
+
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;">
+        <div style="position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;">
           <span style="color: #8B7355; font-size: 14px; letter-spacing: 1px;">- 6 -</span>
         </div>
       </div>
