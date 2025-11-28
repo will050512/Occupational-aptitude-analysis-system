@@ -241,60 +241,60 @@ export class PdfGenerator {
     })
 
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 50px 60px; box-sizing: border-box; background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 40px 50px; box-sizing: border-box; background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); position: relative; overflow: hidden;">
         <!-- 頂部裝飾 -->
-        <div style="text-align: center; margin-bottom: 30px;">
-          <div style="display: inline-block; padding: 10px 30px; background: linear-gradient(135deg, #C17F59 0%, #8B4513 100%); border-radius: 30px; box-shadow: 0 4px 15px rgba(193, 127, 89, 0.3);">
-            <span style="color: white; font-size: 16px; letter-spacing: 3px; font-weight: 500;">🏙️ 新語城 - 職業探索遊戲</span>
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: inline-block; padding: 8px 24px; background: linear-gradient(135deg, #C17F59 0%, #8B4513 100%); border-radius: 25px; box-shadow: 0 3px 12px rgba(193, 127, 89, 0.3);">
+            <span style="color: white; font-size: 14px; letter-spacing: 2px; font-weight: 500;">🏙️ 新語城 - 職業探索遊戲</span>
           </div>
         </div>
 
         <!-- 主標題 -->
-        <div style="text-align: center; margin: 35px 0;">
-          <h1 style="font-size: 42px; color: #5D4E37; margin: 0; font-weight: bold; letter-spacing: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; margin: 20px 0;">
+          <h1 style="font-size: 36px; color: #5D4E37; margin: 0; font-weight: bold; letter-spacing: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
             職業適性分析報告
           </h1>
-          <p style="font-size: 16px; color: #8B7355; margin-top: 12px; letter-spacing: 2px;">Career Aptitude Analysis Report</p>
-          <div style="width: 80px; height: 3px; background: linear-gradient(90deg, #C17F59, #8B4513); margin: 15px auto;"></div>
+          <p style="font-size: 14px; color: #8B7355; margin-top: 10px; letter-spacing: 2px;">Career Aptitude Analysis Report</p>
+          <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #C17F59, #8B4513); margin: 12px auto;"></div>
         </div>
 
         <!-- 類型卡片 -->
-        <div style="background: white; border-radius: 20px; padding: 35px; margin: 25px 0; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 1px solid rgba(193, 127, 89, 0.1);">
+        <div style="background: white; border-radius: 16px; padding: 25px; margin: 15px 0; box-shadow: 0 8px 30px rgba(0,0,0,0.08); border: 1px solid rgba(193, 127, 89, 0.1);">
           <div style="text-align: center;">
-            <div style="font-size: 72px; margin-bottom: 15px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));">${data.personalityType.icon}</div>
-            <h2 style="font-size: 34px; color: #5D4E37; margin: 0; font-weight: bold;">${data.personalityType.name}</h2>
-            <p style="font-size: 15px; color: #C17F59; margin-top: 10px; font-style: italic;">${data.personalityType.tagline}</p>
+            <div style="font-size: 56px; margin-bottom: 10px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));">${data.personalityType.icon}</div>
+            <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">${data.personalityType.name}</h2>
+            <p style="font-size: 13px; color: #C17F59; margin-top: 8px; font-style: italic;">${data.personalityType.tagline}</p>
           </div>
 
-          <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #FDF8F3 0%, #F9F3ED 100%); border-radius: 14px; border-left: 4px solid #C17F59;">
-            <p style="font-size: 14px; color: #5D4E37; line-height: 1.9; text-align: justify; margin: 0;">
+          <div style="margin-top: 18px; padding: 16px; background: linear-gradient(135deg, #FDF8F3 0%, #F9F3ED 100%); border-radius: 12px; border-left: 4px solid #C17F59;">
+            <p style="font-size: 13px; color: #5D4E37; line-height: 1.8; text-align: justify; margin: 0;">
               ${data.personalityType.description}
             </p>
           </div>
         </div>
 
         <!-- 測試者資訊 -->
-        <div style="display: flex; justify-content: space-between; margin-top: 30px; padding: 22px 30px; background: white; border-radius: 16px; box-shadow: 0 6px 25px rgba(0,0,0,0.06);">
+        <div style="display: flex; justify-content: space-between; margin-top: 20px; padding: 18px 25px; background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
           <div>
-            <span style="color: #8B7355; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">測試者 Participant</span>
-            <p style="color: #5D4E37; font-size: 20px; font-weight: bold; margin: 6px 0 0 0;">${data.nickname || '匿名旅行者'}</p>
+            <span style="color: #8B7355; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">測試者 Participant</span>
+            <p style="color: #5D4E37; font-size: 18px; font-weight: bold; margin: 5px 0 0 0;">${data.nickname || '匿名旅行者'}</p>
           </div>
           <div style="text-align: right;">
-            <span style="color: #8B7355; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">測試日期 Date</span>
-            <p style="color: #5D4E37; font-size: 20px; font-weight: bold; margin: 6px 0 0 0;">${dateStr}</p>
+            <span style="color: #8B7355; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">測試日期 Date</span>
+            <p style="color: #5D4E37; font-size: 18px; font-weight: bold; margin: 5px 0 0 0;">${dateStr}</p>
           </div>
         </div>
 
         <!-- 底部區域：公司品牌 + 頁碼 -->
-        <div style="position: absolute; bottom: 40px; left: 60px; right: 60px;">
+        <div style="position: absolute; bottom: 25px; left: 50px; right: 50px;">
           <!-- 公司品牌 Logo -->
-          <div style="text-align: center; padding-bottom: 15px; border-bottom: 1px solid rgba(139, 115, 85, 0.2);">
-            ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 40px; width: auto; margin-bottom: 6px;" />` : ''}
-            <p style="color: #8B7355; font-size: 11px; margin: 0; letter-spacing: 1px;">${companyInfo.name}</p>
+          <div style="text-align: center; padding-bottom: 10px; border-bottom: 1px solid rgba(139, 115, 85, 0.2);">
+            ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 32px; width: auto; margin-bottom: 4px;" />` : ''}
+            <p style="color: #8B7355; font-size: 10px; margin: 0; letter-spacing: 0.5px;">${companyInfo.name}</p>
           </div>
           <!-- 頁碼 -->
-          <div style="text-align: center; margin-top: 12px;">
-            <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 1 -</span>
+          <div style="text-align: center; margin-top: 8px;">
+            <span style="color: #8B7355; font-size: 11px;">- 1 -</span>
           </div>
         </div>
       </div>
@@ -306,74 +306,74 @@ export class PdfGenerator {
       const info = discInfo[key]!
       const percent = data.discPercent[key] || 0
       return `
-        <div style="margin-bottom: 22px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 44px; height: 44px; background: ${info.color}; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px ${info.color}40;">
-                <span style="color: white; font-weight: bold; font-size: 20px;">${key}</span>
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 36px; height: 36px; background: ${info.color}; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px ${info.color}40;">
+                <span style="color: white; font-weight: bold; font-size: 16px;">${key}</span>
               </div>
               <div>
-                <span style="font-weight: bold; color: #5D4E37; font-size: 16px;">${info.nameCn}</span>
-                <span style="color: #8B7355; font-size: 13px; margin-left: 8px;">${info.name}</span>
+                <span style="font-weight: bold; color: #5D4E37; font-size: 14px;">${info.nameCn}</span>
+                <span style="color: #8B7355; font-size: 11px; margin-left: 6px;">${info.name}</span>
               </div>
             </div>
-            <span style="font-weight: bold; color: ${info.color}; font-size: 24px;">${percent}%</span>
+            <span style="font-weight: bold; color: ${info.color}; font-size: 20px;">${percent}%</span>
           </div>
-          <div style="background: #F0F0F0; border-radius: 10px; height: 20px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(90deg, ${info.color}, ${info.color}DD); height: 100%; width: ${percent}%; border-radius: 10px;"></div>
+          <div style="background: #F0F0F0; border-radius: 8px; height: 16px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(90deg, ${info.color}, ${info.color}DD); height: 100%; width: ${percent}%; border-radius: 8px;"></div>
           </div>
         </div>
       `
     }).join('')
 
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 45px 55px; box-sizing: border-box; background: white; position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 3px solid #C17F59; padding-bottom: 15px; margin-bottom: 25px;">
-          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">📊 DISC 行為風格分析</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">深入了解您的行為傾向與溝通風格</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 18px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">📊 DISC 行為風格分析</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">深入了解您的行為傾向與溝通風格</p>
         </div>
 
         <!-- DISC 條形圖 -->
-        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 16px; padding: 28px; margin-bottom: 22px; border: 1px solid #E8E8E8;">
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 1px solid #E8E8E8;">
           ${discBars}
         </div>
 
         <!-- DISC 說明 -->
-        <div style="background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); border-radius: 16px; padding: 22px; border: 1px solid rgba(193, 127, 89, 0.2);">
-          <h3 style="font-size: 17px; color: #5D4E37; margin: 0 0 18px 0; font-weight: bold;">🔍 各維度說明</h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-            <div style="background: white; padding: 14px; border-radius: 12px; border-left: 4px solid #EF5350; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-              <h4 style="color: #EF5350; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">D - 主導型 Dominance</h4>
-              <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.6;">注重結果、果斷自信、勇於挑戰。高D型人傾向於直接、競爭導向，追求效率與成果。</p>
+        <div style="background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); border-radius: 14px; padding: 16px; border: 1px solid rgba(193, 127, 89, 0.2);">
+          <h3 style="font-size: 15px; color: #5D4E37; margin: 0 0 12px 0; font-weight: bold;">🔍 各維度說明</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: white; padding: 10px; border-radius: 10px; border-left: 3px solid #EF5350; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <h4 style="color: #EF5350; margin: 0 0 5px 0; font-size: 12px; font-weight: bold;">D - 主導型</h4>
+              <p style="color: #666; font-size: 11px; margin: 0; line-height: 1.5;">注重結果、果斷自信、勇於挑戰。追求效率與成果。</p>
             </div>
-            <div style="background: white; padding: 14px; border-radius: 12px; border-left: 4px solid #FFCA28; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-              <h4 style="color: #FFCA28; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">I - 影響型 Influence</h4>
-              <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.6;">重視關係、熱情樂觀、善於表達。高I型人擅長激勵他人、建立人際連結。</p>
+            <div style="background: white; padding: 10px; border-radius: 10px; border-left: 3px solid #FFCA28; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <h4 style="color: #FFCA28; margin: 0 0 5px 0; font-size: 12px; font-weight: bold;">I - 影響型</h4>
+              <p style="color: #666; font-size: 11px; margin: 0; line-height: 1.5;">重視關係、熱情樂觀、善於表達。建立人際連結。</p>
             </div>
-            <div style="background: white; padding: 14px; border-radius: 12px; border-left: 4px solid #66BB6A; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-              <h4 style="color: #66BB6A; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">S - 穩定型 Steadiness</h4>
-              <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.6;">重視和諧、耐心真誠、可靠穩重。高S型人傾向於合作、支持他人，提供穩定力量。</p>
+            <div style="background: white; padding: 10px; border-radius: 10px; border-left: 3px solid #66BB6A; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <h4 style="color: #66BB6A; margin: 0 0 5px 0; font-size: 12px; font-weight: bold;">S - 穩定型</h4>
+              <p style="color: #666; font-size: 11px; margin: 0; line-height: 1.5;">重視和諧、耐心真誠、可靠穩重。提供穩定力量。</p>
             </div>
-            <div style="background: white; padding: 14px; border-radius: 12px; border-left: 4px solid #42A5F5; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-              <h4 style="color: #42A5F5; margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">C - 謹慎型 Conscientiousness</h4>
-              <p style="color: #666; font-size: 12px; margin: 0; line-height: 1.6;">注重品質、分析精準、系統化思維。高C型人追求準確性、專業度與邏輯性。</p>
+            <div style="background: white; padding: 10px; border-radius: 10px; border-left: 3px solid #42A5F5; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <h4 style="color: #42A5F5; margin: 0 0 5px 0; font-size: 12px; font-weight: bold;">C - 謹慎型</h4>
+              <p style="color: #666; font-size: 11px; margin: 0; line-height: 1.5;">注重品質、分析精準、系統化思維。追求準確性。</p>
             </div>
           </div>
         </div>
 
         <!-- 您的主要風格 -->
-        <div style="margin-top: 22px; padding: 18px; background: linear-gradient(135deg, #E8F4FD 0%, #D6EAF8 100%); border: 2px solid #42A5F5; border-radius: 14px;">
-          <h3 style="font-size: 15px; color: #1565C0; margin: 0 0 10px 0; font-weight: bold;">💡 您的行為風格特點</h3>
-          <p style="color: #424242; font-size: 13px; margin: 0; line-height: 1.8;">
-            根據您的 DISC 分析結果，您在<strong style="color: ${this.getTopDiscColor(data.discPercent)}; font-size: 15px;"> ${this.getTopDiscName(data.discPercent)} </strong>維度表現最為突出。
-            這意味著您在工作和生活中傾向於展現該維度的典型特質。了解自己的行為風格有助於改善溝通效率、提升團隊協作，並找到最適合您的職業方向。
+        <div style="margin-top: 16px; padding: 14px; background: linear-gradient(135deg, #E8F4FD 0%, #D6EAF8 100%); border: 2px solid #42A5F5; border-radius: 12px;">
+          <h3 style="font-size: 13px; color: #1565C0; margin: 0 0 8px 0; font-weight: bold;">💡 您的行為風格特點</h3>
+          <p style="color: #424242; font-size: 12px; margin: 0; line-height: 1.7;">
+            根據您的 DISC 分析結果，您在<strong style="color: ${this.getTopDiscColor(data.discPercent)}; font-size: 13px;"> ${this.getTopDiscName(data.discPercent)} </strong>維度表現最為突出。
+            這意味著您在工作和生活中傾向於展現該維度的典型特質。了解自己的行為風格有助於改善溝通效率、提升團隊協作。
           </p>
         </div>
 
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 35px; left: 0; right: 0; text-align: center;">
-          <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 2 -</span>
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 2 -</span>
         </div>
       </div>
     `
@@ -385,78 +385,78 @@ export class PdfGenerator {
     const growth = getGrowthAreas(typeId)
 
     const strengthsList = strengths.map(s => `
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px 14px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-        <span style="color: #43A047; font-size: 18px; flex-shrink: 0;">✓</span>
-        <span style="color: #5D4E37; font-size: 13px; line-height: 1.5;">${s}</span>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 8px 10px; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <span style="color: #43A047; font-size: 14px; flex-shrink: 0;">✓</span>
+        <span style="color: #5D4E37; font-size: 11px; line-height: 1.4;">${s}</span>
       </div>
     `).join('')
 
     const growthList = growth.map(g => `
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px 14px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-        <span style="color: #FF9800; font-size: 18px; flex-shrink: 0;">→</span>
-        <span style="color: #5D4E37; font-size: 13px; line-height: 1.5;">${g}</span>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 8px 10px; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <span style="color: #FF9800; font-size: 14px; flex-shrink: 0;">→</span>
+        <span style="color: #5D4E37; font-size: 11px; line-height: 1.4;">${g}</span>
       </div>
     `).join('')
 
     const relatedList = data.relatedTypes.slice(0, 3).map(t => `
-      <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: white; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E8E8E8; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-        <span style="font-size: 36px; flex-shrink: 0;">${t.icon}</span>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 10px; margin-bottom: 8px; border: 1px solid #E8E8E8; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+        <span style="font-size: 28px; flex-shrink: 0;">${t.icon}</span>
         <div>
-          <h4 style="margin: 0; color: #5D4E37; font-size: 15px; font-weight: bold;">${t.name}</h4>
-          <p style="margin: 4px 0 0 0; color: #8B7355; font-size: 12px;">${t.tagline}</p>
+          <h4 style="margin: 0; color: #5D4E37; font-size: 13px; font-weight: bold;">${t.name}</h4>
+          <p style="margin: 2px 0 0 0; color: #8B7355; font-size: 10px;">${t.tagline}</p>
         </div>
       </div>
     `).join('')
 
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 45px 55px; box-sizing: border-box; background: white; position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 3px solid #C17F59; padding-bottom: 15px; margin-bottom: 22px;">
-          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">⭐ 核心優勢與成長空間</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">發揮您的天賦，突破成長瓶頸</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">⭐ 核心優勢與成長空間</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">發揮您的天賦，突破成長瓶頸</p>
         </div>
 
         <!-- 兩欄佈局 -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
           <!-- 優勢 -->
-          <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-radius: 14px; padding: 18px;">
-            <h3 style="font-size: 16px; color: #2E7D32; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
-              <span style="font-size: 22px;">💪</span> 您的核心優勢
+          <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-radius: 12px; padding: 14px;">
+            <h3 style="font-size: 14px; color: #2E7D32; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+              <span style="font-size: 18px;">💪</span> 您的核心優勢
             </h3>
             ${strengthsList}
           </div>
 
           <!-- 成長 -->
-          <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-radius: 14px; padding: 18px;">
-            <h3 style="font-size: 16px; color: #E65100; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
-              <span style="font-size: 22px;">🌱</span> 成長建議
+          <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-radius: 12px; padding: 14px;">
+            <h3 style="font-size: 14px; color: #E65100; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+              <span style="font-size: 18px;">🌱</span> 成長建議
             </h3>
             ${growthList}
           </div>
         </div>
 
         <!-- 人際互動風格 -->
-        <div style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 14px; padding: 18px; margin-bottom: 18px;">
-          <h3 style="font-size: 16px; color: #1565C0; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
-            <span style="font-size: 22px;">🤝</span> 人際互動風格
+        <div style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <h3 style="font-size: 14px; color: #1565C0; margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+            <span style="font-size: 18px;">🤝</span> 人際互動風格
           </h3>
-          <p style="color: #424242; font-size: 13px; line-height: 1.8; margin: 0;">
+          <p style="color: #424242; font-size: 11px; line-height: 1.7; margin: 0;">
             身為「<strong style="color: #5D4E37;">${data.personalityType.name}</strong>」，您在人際互動中展現獨特的風格。您的溝通方式、合作態度和處理衝突的方式都受到您核心性格特質的影響。
-            善用您的優勢，同時意識到可能的盲點，將幫助您建立更有效的人際關係，並在職場上獲得更好的發展。
+            善用您的優勢，同時意識到可能的盲點，將幫助您建立更有效的人際關係。
           </p>
         </div>
 
         <!-- 相關類型 -->
-        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 18px; border: 1px solid #E8E8E8;">
-          <h3 style="font-size: 16px; color: #5D4E37; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
-            <span style="font-size: 22px;">🔗</span> 相關人格類型
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 12px; padding: 14px; border: 1px solid #E8E8E8;">
+          <h3 style="font-size: 14px; color: #5D4E37; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+            <span style="font-size: 18px;">🔗</span> 相關人格類型
           </h3>
           ${relatedList}
         </div>
 
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 35px; left: 0; right: 0; text-align: center;">
-          <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 4 -</span>
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 4 -</span>
         </div>
       </div>
     `
@@ -467,46 +467,46 @@ export class PdfGenerator {
     const careers = getCareers(typeId)
 
     const careerList = careers.map((c, i) => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: ${i % 2 === 0 ? 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)' : 'white'}; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E8E8E8;">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #C17F59 0%, #8B4513 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(193, 127, 89, 0.25);">
-            <span style="color: white; font-weight: bold; font-size: 16px;">${i + 1}</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: ${i % 2 === 0 ? 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)' : 'white'}; border-radius: 10px; margin-bottom: 8px; border: 1px solid #E8E8E8;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #C17F59 0%, #8B4513 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(193, 127, 89, 0.25);">
+            <span style="color: white; font-weight: bold; font-size: 13px;">${i + 1}</span>
           </div>
           <div>
-            <h4 style="margin: 0; color: #5D4E37; font-size: 15px; font-weight: bold;">${c.title}</h4>
+            <h4 style="margin: 0; color: #5D4E37; font-size: 13px; font-weight: bold;">${c.title}</h4>
           </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 100px; height: 8px; background: #E8E8E8; border-radius: 4px; overflow: hidden;">
-            <div style="width: ${c.match}%; height: 100%; background: linear-gradient(90deg, #66BB6A 0%, #43A047 100%); border-radius: 4px;"></div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 80px; height: 6px; background: #E8E8E8; border-radius: 3px; overflow: hidden;">
+            <div style="width: ${c.match}%; height: 100%; background: linear-gradient(90deg, #66BB6A 0%, #43A047 100%); border-radius: 3px;"></div>
           </div>
-          <span style="color: #43A047; font-weight: bold; font-size: 16px; min-width: 50px; text-align: right;">${c.match}%</span>
+          <span style="color: #43A047; font-weight: bold; font-size: 13px; min-width: 40px; text-align: right;">${c.match}%</span>
         </div>
       </div>
     `).join('')
 
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 45px 55px; box-sizing: border-box; background: white; position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 3px solid #C17F59; padding-bottom: 15px; margin-bottom: 22px;">
-          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">💼 職業發展建議</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">根據您的人格特質，為您推薦最適合的職業方向</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">💼 職業發展建議</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">根據您的人格特質，為您推薦最適合的職業方向</p>
         </div>
 
         <!-- 推薦職業列表 -->
-        <div style="margin-bottom: 22px;">
-          <h3 style="font-size: 17px; color: #5D4E37; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px; font-weight: bold;">
-            <span style="font-size: 24px;">🎯</span> 推薦職業
+        <div style="margin-bottom: 16px;">
+          <h3 style="font-size: 15px; color: #5D4E37; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
+            <span style="font-size: 20px;">🎯</span> 推薦職業
           </h3>
           ${careerList}
         </div>
 
         <!-- 職涯發展提示 -->
-        <div style="background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); border-radius: 14px; padding: 22px; margin-bottom: 22px; border: 1px solid rgba(193, 127, 89, 0.2);">
-          <h3 style="font-size: 16px; color: #5D4E37; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px; font-weight: bold;">
-            <span style="font-size: 22px;">📝</span> 職涯發展提示
+        <div style="background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(193, 127, 89, 0.2);">
+          <h3 style="font-size: 14px; color: #5D4E37; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+            <span style="font-size: 18px;">📝</span> 職涯發展提示
           </h3>
-          <ul style="color: #5D4E37; font-size: 13px; line-height: 2; margin: 0; padding-left: 20px;">
+          <ul style="color: #5D4E37; font-size: 11px; line-height: 1.8; margin: 0; padding-left: 18px;">
             <li>選擇職業時，考慮您的核心優勢和興趣的交集點</li>
             <li>嘗試在工作中尋找能發揮您優勢的機會</li>
             <li>持續學習和成長，擴展您的技能組合</li>
@@ -516,17 +516,17 @@ export class PdfGenerator {
         </div>
 
         <!-- 報告聲明 -->
-        <div style="background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%); border-radius: 12px; padding: 18px; text-align: center; border: 1px solid #E0E0E0;">
-          <p style="color: #757575; font-size: 12px; margin: 0; line-height: 1.8;">
+        <div style="background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid #E0E0E0;">
+          <p style="color: #757575; font-size: 10px; margin: 0; line-height: 1.7;">
             📋 本報告由「<strong style="color: #5D4E37;">新語城 - 職業探索遊戲</strong>」自動生成<br>
             分析結果僅供參考，實際職業選擇請結合個人實際情況與專業諮詢<br>
-            © ${new Date().getFullYear()} Career Exploration Game. All Rights Reserved.
+            © ${new Date().getFullYear()} Career Exploration Game
           </p>
         </div>
 
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 35px; left: 0; right: 0; text-align: center;">
-          <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 5 -</span>
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 5 -</span>
         </div>
       </div>
     `
@@ -535,25 +535,25 @@ export class PdfGenerator {
   private renderRiasecPage(data: PdfReportData): string {
     // RIASEC 類型資訊
     const riasecInfo: Record<string, { name: string; icon: string; color: string; desc: string }> = {
-      R: { name: '實用型', icon: '🔧', color: '#4CAF50', desc: '喜歡操作、實作，重視具體成果' },
-      I: { name: '研究型', icon: '🔬', color: '#2196F3', desc: '喜歡探索、分析，追求知識真理' },
-      A: { name: '藝術型', icon: '🎨', color: '#9C27B0', desc: '喜歡創作、表達，追求美感原創' },
-      S: { name: '社會型', icon: '🤝', color: '#FF9800', desc: '喜歡助人、教導，重視人際關係' },
-      E: { name: '企業型', icon: '💼', color: '#F44336', desc: '喜歡領導、說服，追求成就影響' },
-      C: { name: '事務型', icon: '📋', color: '#607D8B', desc: '喜歡組織、規劃，重視秩序效率' }
+      R: { name: '實用型', icon: '🔧', color: '#4CAF50', desc: '喜歡操作、實作' },
+      I: { name: '研究型', icon: '🔬', color: '#2196F3', desc: '喜歡探索、分析' },
+      A: { name: '藝術型', icon: '🎨', color: '#9C27B0', desc: '喜歡創作、表達' },
+      S: { name: '社會型', icon: '🤝', color: '#FF9800', desc: '喜歡助人、教導' },
+      E: { name: '企業型', icon: '💼', color: '#F44336', desc: '喜歡領導、說服' },
+      C: { name: '事務型', icon: '📋', color: '#607D8B', desc: '喜歡組織、規劃' }
     }
 
     // 計算正規化分數
-    const total = Object.values(data.riasecScores).reduce((sum, v) => sum + v, 0)
+    const total = Object.values(data.riasecScores).reduce((sum: number, v: number) => sum + v, 0)
     const normalizedScores: Record<string, number> = {}
     for (const key of Object.keys(riasecInfo)) {
       normalizedScores[key] = total > 0 ? Math.round((data.riasecScores[key] || 0) / total * 100) : 17
     }
 
     // 生成六邊形雷達圖的 SVG
-    const centerX = 180
-    const centerY = 160
-    const maxRadius = 120
+    const centerX = 160
+    const centerY = 130
+    const maxRadius = 100
     const points = ['R', 'I', 'A', 'S', 'E', 'C']
     
     // 計算六邊形各頂點
@@ -589,13 +589,13 @@ export class PdfGenerator {
 
     // 生成標籤
     const labels = points.map((key, i) => {
-      const p = getPoint(i, maxRadius + 30)
+      const p = getPoint(i, maxRadius + 25)
       const info = riasecInfo[key]!
       return `
-        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="bold" fill="${info.color}">
+        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="${info.color}">
           ${info.icon} ${info.name}
         </text>
-        <text x="${p.x}" y="${p.y + 15}" text-anchor="middle" font-size="11" fill="#666">
+        <text x="${p.x}" y="${p.y + 13}" text-anchor="middle" font-size="10" fill="#666">
           ${normalizedScores[key]}%
         </text>
       `
@@ -606,30 +606,30 @@ export class PdfGenerator {
       const info = riasecInfo[key]!
       const score = normalizedScores[key] || 0
       return `
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; border-left: 3px solid ${info.color}; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
-          <span style="font-size: 20px;">${info.icon}</span>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid ${info.color}; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <span style="font-size: 16px;">${info.icon}</span>
           <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-              <span style="font-weight: bold; color: ${info.color}; font-size: 12px;">${info.name}</span>
-              <span style="font-weight: bold; color: ${info.color}; font-size: 14px;">${score}%</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: bold; color: ${info.color}; font-size: 11px;">${info.name}</span>
+              <span style="font-weight: bold; color: ${info.color}; font-size: 12px;">${score}%</span>
             </div>
-            <p style="margin: 0; font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${info.desc}</p>
+            <p style="margin: 0; font-size: 10px; color: #666;">${info.desc}</p>
           </div>
         </div>
       `
     }).join('')
 
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 45px 55px; box-sizing: border-box; background: white; position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 3px solid #C17F59; padding-bottom: 15px; margin-bottom: 20px;">
-          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">🎯 RIASEC 職業興趣分析</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">探索您的職業興趣傾向，找到適合的職業方向</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">🎯 RIASEC 職業興趣分析</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">探索您的職業興趣傾向，找到適合的職業方向</p>
         </div>
 
         <!-- 雷達圖 -->
-        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 16px; padding: 20px; margin-bottom: 18px; border: 1px solid #E8E8E8;">
-          <svg width="360" height="320" viewBox="0 0 360 320" style="display: block; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 15px; margin-bottom: 14px; border: 1px solid #E8E8E8;">
+          <svg width="320" height="260" viewBox="0 0 320 260" style="display: block; margin: 0 auto;">
             <!-- 網格 -->
             ${gridLines}
             <!-- 軸線 -->
@@ -640,7 +640,7 @@ export class PdfGenerator {
             ${points.map((key, i) => {
               const value = normalizedScores[key] || 0
               const p = getPoint(i, (value / 100) * maxRadius)
-              return `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="2"/>`
+              return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="2"/>`
             }).join('')}
             <!-- 標籤 -->
             ${labels}
@@ -648,22 +648,22 @@ export class PdfGenerator {
         </div>
 
         <!-- RIASEC 說明卡片 -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
           ${riasecCards}
         </div>
 
         <!-- 說明文字 -->
-        <div style="padding: 16px; background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; border: 1px solid rgba(33, 150, 243, 0.2);">
-          <h3 style="font-size: 14px; color: #1565C0; margin: 0 0 8px 0; font-weight: bold;">💡 如何解讀 RIASEC 結果</h3>
-          <p style="color: #424242; font-size: 12px; margin: 0; line-height: 1.7;">
+        <div style="padding: 14px; background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 10px; border: 1px solid rgba(33, 150, 243, 0.2);">
+          <h3 style="font-size: 13px; color: #1565C0; margin: 0 0 6px 0; font-weight: bold;">💡 如何解讀 RIASEC 結果</h3>
+          <p style="color: #424242; font-size: 11px; margin: 0; line-height: 1.6;">
             RIASEC 模型由心理學家 John Holland 提出，將職業興趣分為六種類型。您的分數越高的類型，代表您對該類型工作活動的興趣越強。
-            建議關注您得分最高的 2-3 種類型，尋找結合這些興趣的職業方向。相鄰類型（如 R-I、I-A）具有較高的相容性。
+            建議關注您得分最高的 2-3 種類型，尋找結合這些興趣的職業方向。
           </p>
         </div>
 
         <!-- 頁碼 -->
-        <div style="position: absolute; bottom: 35px; left: 0; right: 0; text-align: center;">
-          <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 3 -</span>
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 3 -</span>
         </div>
       </div>
     `
@@ -671,68 +671,68 @@ export class PdfGenerator {
 
   private renderTheoryPage(): string {
     return `
-      <div style="width: 794px; min-height: 1123px; padding: 45px 55px 100px 55px; box-sizing: border-box; background: white; position: relative;">
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 3px solid #C17F59; padding-bottom: 15px; margin-bottom: 22px;">
-          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">📚 測評理論基礎</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">本測評基於經典心理學理論，為您提供科學的職業性向分析</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 16px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">📚 測評理論基礎</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">本測評基於經典心理學理論，為您提供科學的職業性向分析</p>
         </div>
 
         <!-- DISC 理論 -->
-        <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid rgba(255, 152, 0, 0.2);">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span style="color: white; font-size: 20px;">📊</span>
+        <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(255, 152, 0, 0.2);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="color: white; font-size: 16px;">📊</span>
             </div>
             <div>
-              <h3 style="margin: 0; color: #E65100; font-size: 17px; font-weight: bold;">DISC 行為風格理論</h3>
-              <p style="margin: 3px 0 0 0; color: #8B7355; font-size: 11px;">William Moulton Marston · 1928年</p>
+              <h3 style="margin: 0; color: #E65100; font-size: 15px; font-weight: bold;">DISC 行為風格理論</h3>
+              <p style="margin: 2px 0 0 0; color: #8B7355; font-size: 10px;">William Moulton Marston · 1928年</p>
             </div>
           </div>
-          <p style="color: #5D4E37; font-size: 12px; line-height: 1.7; margin: 0;">
+          <p style="color: #5D4E37; font-size: 11px; line-height: 1.6; margin: 0;">
             DISC 理論由美國心理學家 William Moulton Marston 於 1928 年在其著作《Emotions of Normal People》中提出。
-            該理論將人類行為分為四種主要風格：主導型(D)、影響型(I)、穩定型(S)、謹慎型(C)。這套理論廣泛應用於職業性向分析、團隊建設和領導力發展等領域。
+            該理論將人類行為分為四種主要風格：主導型(D)、影響型(I)、穩定型(S)、謹慎型(C)。廣泛應用於職業性向分析、團隊建設和領導力發展等領域。
           </p>
         </div>
 
         <!-- RIASEC 理論 -->
-        <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid rgba(76, 175, 80, 0.2);">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span style="color: white; font-size: 20px;">🎯</span>
+        <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(76, 175, 80, 0.2);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="color: white; font-size: 16px;">🎯</span>
             </div>
             <div>
-              <h3 style="margin: 0; color: #2E7D32; font-size: 17px; font-weight: bold;">Holland 職業興趣理論</h3>
-              <p style="margin: 3px 0 0 0; color: #8B7355; font-size: 11px;">John L. Holland · 1959年</p>
+              <h3 style="margin: 0; color: #2E7D32; font-size: 15px; font-weight: bold;">Holland 職業興趣理論</h3>
+              <p style="margin: 2px 0 0 0; color: #8B7355; font-size: 10px;">John L. Holland · 1959年</p>
             </div>
           </div>
-          <p style="color: #5D4E37; font-size: 12px; line-height: 1.7; margin: 0;">
+          <p style="color: #5D4E37; font-size: 11px; line-height: 1.6; margin: 0;">
             RIASEC 理論由美國心理學家 John L. Holland 於 1959 年提出，是目前最廣泛應用的職業興趣理論之一。
             該理論將職業興趣分為六種類型：實用型(R)、研究型(I)、藝術型(A)、社會型(S)、企業型(E)、事務型(C)。
           </p>
         </div>
 
         <!-- 16 種人格類型 -->
-        <div style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid rgba(33, 150, 243, 0.2);">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-            <div style="width: 42px; height: 42px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span style="color: white; font-size: 20px;">🧩</span>
+        <div style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid rgba(33, 150, 243, 0.2);">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span style="color: white; font-size: 16px;">🧩</span>
             </div>
             <div>
-              <h3 style="margin: 0; color: #1565C0; font-size: 17px; font-weight: bold;">16 種職業人格類型</h3>
-              <p style="margin: 3px 0 0 0; color: #8B7355; font-size: 11px;">結合 DISC 與 RIASEC 的整合模型</p>
+              <h3 style="margin: 0; color: #1565C0; font-size: 15px; font-weight: bold;">16 種職業人格類型</h3>
+              <p style="margin: 2px 0 0 0; color: #8B7355; font-size: 10px;">結合 DISC 與 RIASEC 的整合模型</p>
             </div>
           </div>
-          <p style="color: #5D4E37; font-size: 12px; line-height: 1.7; margin: 0;">
+          <p style="color: #5D4E37; font-size: 11px; line-height: 1.6; margin: 0;">
             本測評創新地結合 DISC 行為風格與 RIASEC 職業興趣兩套經典理論，發展出 16 種獨特的職業人格類型。
             每種類型都融合了行為傾向與職業興趣的特點，能更全面地描述個人的職業性向。
           </p>
         </div>
 
         <!-- 參考文獻 -->
-        <div style="background: #FAFAFA; border-radius: 12px; padding: 16px; border: 1px solid #E8E8E8; margin-bottom: 16px;">
-          <h4 style="font-size: 13px; color: #5D4E37; margin: 0 0 12px 0; font-weight: bold;">📖 主要參考文獻</h4>
-          <ul style="color: #666; font-size: 11px; line-height: 1.9; margin: 0; padding-left: 18px;">
+        <div style="background: #FAFAFA; border-radius: 10px; padding: 12px; border: 1px solid #E8E8E8; margin-bottom: 12px;">
+          <h4 style="font-size: 12px; color: #5D4E37; margin: 0 0 8px 0; font-weight: bold;">📖 主要參考文獻</h4>
+          <ul style="color: #666; font-size: 10px; line-height: 1.7; margin: 0; padding-left: 16px;">
             <li>Marston, W. M. (1928). Emotions of Normal People. Kegan Paul.</li>
             <li>Holland, J. L. (1959). A Theory of Vocational Choice. Journal of Counseling Psychology.</li>
             <li>Holland, J. L. (1997). Making Vocational Choices (3rd ed.). Psychological Assessment Resources.</li>
@@ -741,23 +741,23 @@ export class PdfGenerator {
         </div>
 
         <!-- 免責聲明 -->
-        <div style="padding: 14px; background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%); border-radius: 10px; text-align: center;">
-          <p style="color: #757575; font-size: 11px; margin: 0; line-height: 1.7;">
+        <div style="padding: 12px; background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%); border-radius: 8px; text-align: center;">
+          <p style="color: #757575; font-size: 10px; margin: 0; line-height: 1.6;">
             ⚠️ 本測評結果僅供個人職涯探索參考，不應作為正式的心理評估或職業決策的唯一依據。<br>
             如需專業的職涯諮詢，請洽詢合格的職涯顧問或心理專業人員。
           </p>
         </div>
 
         <!-- 底部區域：公司品牌 + 頁碼 -->
-        <div style="position: absolute; bottom: 35px; left: 55px; right: 55px;">
+        <div style="position: absolute; bottom: 25px; left: 45px; right: 45px;">
           <!-- 公司品牌 Logo -->
-          <div style="text-align: center; padding-bottom: 12px; border-bottom: 1px solid rgba(139, 115, 85, 0.2);">
-            ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 36px; width: auto; margin-bottom: 5px;" />` : ''}
-            <p style="color: #8B7355; font-size: 10px; margin: 0; letter-spacing: 0.5px;">${companyInfo.name} © ${new Date().getFullYear()}</p>
+          <div style="text-align: center; padding-bottom: 8px; border-bottom: 1px solid rgba(139, 115, 85, 0.2);">
+            ${this.logoBase64 ? `<img src="${this.logoBase64}" alt="${companyInfo.name}" style="height: 28px; width: auto; margin-bottom: 4px;" />` : ''}
+            <p style="color: #8B7355; font-size: 9px; margin: 0;">${companyInfo.name} © ${new Date().getFullYear()}</p>
           </div>
           <!-- 頁碼 -->
-          <div style="text-align: center; margin-top: 10px;">
-            <span style="color: #8B7355; font-size: 12px; letter-spacing: 1px;">- 6 -</span>
+          <div style="text-align: center; margin-top: 8px;">
+            <span style="color: #8B7355; font-size: 11px;">- 6 -</span>
           </div>
         </div>
       </div>
