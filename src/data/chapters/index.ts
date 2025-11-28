@@ -1,6 +1,7 @@
 /**
  * 章節索引
  * 匯出所有章節及相關工具函數
+ * 支援分支劇情路線系統
  */
 
 import chapter1, { type Chapter, type Scene, type Choice, type SceneVariant } from './chapter1'
@@ -10,6 +11,127 @@ import chapter4 from './chapter4'
 
 export type { Chapter, Scene, Choice, SceneVariant }
 
+/**
+ * 分支路線類型
+ * - entrepreneur: 創業者路線（D/I 傾向高）
+ * - teamwork: 協作者路線（S 傾向高）
+ * - specialist: 研究者路線（C 傾向高）
+ */
+export type BranchType = 'entrepreneur' | 'teamwork' | 'specialist'
+
+/**
+ * DISC 分數介面
+ */
+export interface DISCScores {
+  D: number
+  I: number
+  S: number
+  C: number
+}
+
+/**
+ * 分支元資料
+ */
+export interface BranchMeta {
+  id: BranchType
+  name: string
+  description: string
+  icon: string
+  color: string
+  primaryTraits: string[]
+}
+
+/**
+ * 分支元資料定義
+ */
+export const BRANCH_META: Record<BranchType, BranchMeta> = {
+  entrepreneur: {
+    id: 'entrepreneur',
+    name: '創業先鋒',
+    description: '你展現出強烈的領導力與影響力，勇於挑戰未知、把握機會。',
+    icon: '🚀',
+    color: '#E07B54',
+    primaryTraits: ['決斷力', '影響力', '冒險精神']
+  },
+  teamwork: {
+    id: 'teamwork',
+    name: '協作大師',
+    description: '你重視團隊和諧與人際關係，善於在群體中發揮穩定的力量。',
+    icon: '🤝',
+    color: '#6B8E9F',
+    primaryTraits: ['同理心', '穩定性', '團隊意識']
+  },
+  specialist: {
+    id: 'specialist',
+    name: '專業探索者',
+    description: '你追求深度與精確，喜歡鑽研問題並找出最佳解決方案。',
+    icon: '🔬',
+    color: '#8B7355',
+    primaryTraits: ['分析力', '專注度', '求知慾']
+  }
+}
+
+/**
+ * 分支判斷點場景 ID（Q4 結束場景）
+ */
+export const BRANCH_DECISION_SCENE = 'ch1-night'
+
+/**
+ * 分支判斷點題號
+ */
+export const BRANCH_DECISION_QUESTION = 4
+
+/**
+ * 根據 DISC 分數決定分支路線
+ * 規則：
+ * - D + I >= S + C → entrepreneur（創業者）
+ * - S 最高且 S >= D + I → teamwork（協作者）
+ * - 其他情況 → specialist（研究者）
+ */
+export function determineBranch(discScores: DISCScores): BranchType {
+  const { D, I, S, C } = discScores
+  const diSum = D + I
+  const scSum = S + C
+  
+  // D + I 傾向高 → 創業者路線
+  if (diSum >= scSum && (D >= S || I >= S)) {
+    return 'entrepreneur'
+  }
+  
+  // S 傾向最高 → 協作者路線
+  if (S >= D && S >= I && S >= C) {
+    return 'teamwork'
+  }
+  
+  // 其他情況（C 傾向高或平均）→ 研究者路線
+  return 'specialist'
+}
+
+/**
+ * 獲取分支的元資料
+ */
+export function getBranchMeta(branch: BranchType): BranchMeta {
+  return BRANCH_META[branch]
+}
+
+/**
+ * 獲取所有分支類型
+ */
+export function getAllBranchTypes(): BranchType[] {
+  return ['entrepreneur', 'teamwork', 'specialist']
+}
+
+/**
+ * 共同章節（Q1-Q4）
+ * 所有玩家都會經歷的開場部分
+ */
+export const commonChapters: Chapter[] = [
+  chapter1
+]
+
+/**
+ * 原有章節（用於向後相容）
+ */
 export const chapters: Chapter[] = [
   chapter1,
   chapter2,

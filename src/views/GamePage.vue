@@ -3,6 +3,11 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryManager } from '@/engine/StoryManager'
 import type { Choice } from '@/data/chapters'
+import type { InteractiveScene } from '@/data/branches'
+import type { RandomEventChoice } from '@/data/random-events'
+import RankingQuestion from '@/components/RankingQuestion.vue'
+import SliderQuestion from '@/components/SliderQuestion.vue'
+import RandomEventPopup from '@/components/RandomEventPopup.vue'
 
 const router = useRouter()
 const storyManager = useStoryManager()
@@ -13,6 +18,11 @@ const showFeedback = ref(false)
 const currentFeedback = ref('')
 const selectedChoice = ref<Choice | null>(null)
 const isTransitioning = ref(false)
+
+// 互動題和隨機事件狀態
+const showRankingQuestion = ref(false)
+const showSliderQuestion = ref(false)
+const showRandomEvent = ref(false)
 
 // 打字機效果狀態
 const displayedNarrative = ref('')
@@ -26,6 +36,16 @@ const currentChapter = computed(() => storyManager.currentChapter.value)
 const progress = computed(() => storyManager.progressPercent.value)
 const questionNumber = computed(() => storyManager.currentQuestionNumber.value)
 const isComplete = computed(() => storyManager.isGameComplete.value)
+
+// 互動場景相關
+const interactiveScene = computed(() => {
+  const scene = currentScene.value as InteractiveScene | undefined
+  return scene?.interactiveType ? scene : null
+})
+
+// 隨機事件相關
+const pendingEvent = computed(() => storyManager.getPendingEvent())
+const hasPendingEvent = computed(() => storyManager.hasPendingEvent)
 
 // 完整敘事文字
 const fullNarrative = computed(() => currentScene.value?.narrative || '')
@@ -139,6 +159,96 @@ function exitGame() {
     router.push('/')
   }
 }
+
+// 處理排序題提交
+function handleRankingSubmit(ranking: string[]) {
+  if (!interactiveScene.value || !interactiveScene.value.questionNumber) return
+  
+  storyManager.recordRankingResult(
+    interactiveScene.value.id,
+    interactiveScene.value.questionNumber,
+    ranking
+  )
+  
+  showRankingQuestion.value = false
+  
+  // 自動進入下一場景
+  setTimeout(() => {
+    handleContinue()
+  }, 300)
+}
+
+// 處理滑桿題提交
+function handleSliderSubmit(value: number) {
+  if (!interactiveScene.value || !interactiveScene.value.questionNumber) return
+  
+  const config = interactiveScene.value.sliderConfig
+  if (!config) return
+  
+  storyManager.recordSliderResult(
+    interactiveScene.value.id,
+    interactiveScene.value.questionNumber,
+    value,
+    config.minLabel,
+    config.maxLabel
+  )
+  
+  showSliderQuestion.value = false
+  
+  // 自動進入下一場景
+  setTimeout(() => {
+    handleContinue()
+  }, 300)
+}
+
+// 處理隨機事件選擇
+function handleEventChoice(choice: RandomEventChoice) {
+  const event = pendingEvent.value
+  if (!event) return
+  
+  storyManager.handleEventChoice(event.id, choice)
+  
+  // 延遲關閉，讓玩家看到反饋
+  setTimeout(() => {
+    showRandomEvent.value = false
+  }, 300)
+}
+
+// 關閉隨機事件（跳過）
+function closeRandomEvent() {
+  storyManager.skipRandomEvent()
+  showRandomEvent.value = false
+}
+
+// 監聯場景變化，檢查互動題型
+watch(currentScene, () => {
+  startTypewriter()
+  
+  // 重置隨機事件顯示狀態
+  showRandomEvent.value = false
+  
+  // 檢查是否為互動題型（互動題優先於隨機事件）
+  const scene = interactiveScene.value
+  if (scene?.interactiveType === 'ranking') {
+    showRankingQuestion.value = true
+  } else if (scene?.interactiveType === 'slider') {
+    showSliderQuestion.value = true
+  }
+}, { immediate: true })
+
+// 監聽打字機完成，延遲顯示隨機事件
+watch(isTyping, (typing) => {
+  // 打字完成後，檢查是否有待處理的隨機事件
+  if (!typing && hasPendingEvent.value) {
+    // 延遲顯示，讓玩家有時間閱讀場景
+    setTimeout(() => {
+      // 再次確認事件仍然存在且不在互動題中
+      if (hasPendingEvent.value && !showRankingQuestion.value && !showSliderQuestion.value) {
+        showRandomEvent.value = true
+      }
+    }, 800)
+  }
+})
 
 // 監聽完成狀態
 watch(isComplete, (complete) => {
@@ -271,7 +381,7 @@ onUnmounted(() => {
 
         <!-- 繼續按鈕（無選擇的過場） -->
         <div 
-          v-if="currentScene?.choices?.length === 0 && !showFeedback"
+          v-if="currentScene?.choices?.length === 0 && !showFeedback && !showRankingQuestion && !showSliderQuestion"
           class="continue-section"
         >
           <button
@@ -282,8 +392,42 @@ onUnmounted(() => {
             {{ isTyping ? '點擊跳過' : '繼續' }}
           </button>
         </div>
+
+        <!-- 排序題組件 -->
+        <Transition name="slide-up">
+          <div v-if="showRankingQuestion && interactiveScene?.rankingOptions" class="interactive-section">
+            <RankingQuestion
+              :question="interactiveScene.title"
+              :narrative="interactiveScene.narrative"
+              :options="interactiveScene.rankingOptions"
+              @submit="handleRankingSubmit"
+            />
+          </div>
+        </Transition>
+
+        <!-- 滑桿題組件 -->
+        <Transition name="slide-up">
+          <div v-if="showSliderQuestion && interactiveScene?.sliderConfig" class="interactive-section">
+            <SliderQuestion
+              :question="interactiveScene.title"
+              :narrative="interactiveScene.narrative"
+              :config="interactiveScene.sliderConfig"
+              @submit="handleSliderSubmit"
+            />
+          </div>
+        </Transition>
       </div>
     </main>
+
+    <!-- 隨機事件彈窗 -->
+    <Teleport to="body">
+      <RandomEventPopup
+        v-if="showRandomEvent && pendingEvent"
+        :event="pendingEvent"
+        @select="handleEventChoice"
+        @close="closeRandomEvent"
+      />
+    </Teleport>
 
     <!-- 底部裝飾線 -->
     <div class="game-footer-line"></div>
@@ -882,6 +1026,43 @@ onUnmounted(() => {
   
   .game-footer-line {
     height: calc(4px + env(safe-area-inset-bottom));
+  }
+}
+
+/* 互動題區塊 */
+.interactive-section {
+  margin-top: var(--spacing-lg);
+  animation: fadeInUp 0.5s ease;
+}
+
+/* slide-up 過渡動畫 */
+.slide-up-enter-active {
+  animation: slideUp 0.4s ease-out;
+}
+
+.slide-up-leave-active {
+  animation: slideDown 0.3s ease-in;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
   }
 }
 </style>

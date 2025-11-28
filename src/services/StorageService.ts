@@ -3,6 +3,10 @@
  * 管理遊戲存檔、歷史結果、已解鎖類型等數據
  */
 
+import type { BranchType } from '@/data/chapters'
+import type { EventChoiceRecord } from '@/engine/RandomEventManager'
+import type { InteractiveResult } from '@/utils/InteractiveScoring'
+
 const STORAGE_KEYS = {
   SESSION_ID: 'neocity_session_id',
   SPLASH_SEEN: 'neocity_splash_seen',
@@ -19,6 +23,18 @@ export interface GameProgress {
   choices: ChoiceRecord[]
   startedAt: string
   lastUpdatedAt: string
+  /** 目前所在的分支路線 */
+  currentBranch?: BranchType | null
+  /** 分支路線內的場景索引 */
+  branchSceneIndex?: number
+  /** 已觸發的隨機事件 ID */
+  triggeredEventIds?: string[]
+  /** 隨機事件選擇記錄 */
+  eventChoices?: EventChoiceRecord[]
+  /** 互動題結果 */
+  interactiveResults?: InteractiveResult[]
+  /** 累計 DISC 分數 */
+  discScores?: { D: number; I: number; S: number; C: number }
 }
 
 export interface ChoiceRecord {

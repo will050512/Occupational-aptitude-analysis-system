@@ -4,25 +4,31 @@
  * 主題：面對新環境的態度與初步決策風格
  */
 
+/** DISC 權重型別 */
+export interface DISCWeights {
+  D: number
+  I: number
+  S: number
+  C: number
+}
+
+/** RIASEC 權重型別 */
+export interface RIASECWeights {
+  R: number  // Realistic 實際型
+  I: number  // Investigative 研究型
+  A: number  // Artistic 藝術型
+  S: number  // Social 社會型
+  E: number  // Enterprising 企業型
+  C: number  // Conventional 傳統型
+}
+
 export interface Choice {
   id: string
   text: string
   /** DISC 權重：D(支配)、I(影響)、S(穩定)、C(謹慎) */
-  weights: {
-    D: number
-    I: number
-    S: number
-    C: number
-  }
+  weights: DISCWeights
   /** RIASEC 權重 */
-  riasec: {
-    R: number  // Realistic 實際型
-    I: number  // Investigative 研究型
-    A: number  // Artistic 藝術型
-    S: number  // Social 社會型
-    E: number  // Enterprising 企業型
-    C: number  // Conventional 傳統型
-  }
+  riasec: RIASECWeights
   feedback: string
   nextScene?: string
 }

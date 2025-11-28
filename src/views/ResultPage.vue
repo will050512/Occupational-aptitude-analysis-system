@@ -2,7 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryManager } from '@/engine/StoryManager'
-import { analyzePersonality, normalizeScores } from '@/utils/PersonalityAnalyzer'
+import { analyzePersonalityWithCalibration, normalizeScores } from '@/utils/PersonalityAnalyzer'
+import type { PersonalityType } from '@/data/personality-types'
 import { StorageService } from '@/services/StorageService'
 import { DataSubmitter } from '@/services/DataSubmitter'
 import { SessionService } from '@/services/SessionService'
@@ -30,11 +31,36 @@ const pdfErrorDetail = ref('')
 const pdfRetryCount = ref(0)
 const maxPdfRetries = 3
 
-// 分析結果
+// 分析結果 - 使用分支校準
 const analysisResult = computed(() => {
   const choices = storyManager.allChoices
   if (choices.length === 0) return null
-  return analyzePersonality(choices)
+  
+  // 獲取分支和互動結果進行校準分析
+  const branch = storyManager.currentBranch
+  const interactiveResults = storyManager.interactiveResults
+  const eventChoices = storyManager.eventChoices
+  
+  return analyzePersonalityWithCalibration(
+    choices,
+    branch,
+    interactiveResults,
+    eventChoices
+  )
+})
+
+// 分支路線資訊
+const branchInfo = computed(() => {
+  const branch = storyManager.currentBranch
+  if (!branch) return null
+  
+  const branchNames: Record<string, { name: string; icon: string; color: string }> = {
+    entrepreneur: { name: '創業者之路', icon: '🚀', color: '#E07B54' },
+    teamwork: { name: '協作者之路', icon: '🤝', color: '#4ECDC4' },
+    specialist: { name: '研究者之路', icon: '🔬', color: '#6B8E9F' }
+  }
+  
+  return branchNames[branch] || null
 })
 
 // DISC 分數百分比
@@ -63,12 +89,101 @@ const personalityType = computed(() => analysisResult.value?.personalityType)
 // 相近類型
 const relatedTypes = computed(() => analysisResult.value?.relatedTypes || [])
 
+// 分析信心度
+const confidence = computed(() => analysisResult.value?.confidence || 0)
+
+// DISC 主要和次要類型
+const discPrimary = computed(() => analysisResult.value?.discPrimary || 'D')
+const discSecondary = computed(() => analysisResult.value?.discSecondary || 'I')
+
+// RIASEC 前三高
+const riasecTop3 = computed(() => analysisResult.value?.riasecTop || ['R', 'I', 'A'])
+
+// 個人化分析摘要
+const personalSummary = computed(() => {
+  if (!personalityType.value || !discPrimary.value) return ''
+  
+  const summaries: Record<string, string> = {
+    'D': '你是天生的領導者，擅長在壓力下做出決策，追求效率和結果。',
+    'I': '你是團隊中的活力來源，善於溝通表達，能夠激勵和影響他人。',
+    'S': '你是可靠的支持者，注重和諧穩定，善於傾聽和協調團隊關係。',
+    'C': '你是細節導向的分析師，追求準確與品質，擅長深入研究問題。'
+  }
+  
+  return summaries[discPrimary.value] || ''
+})
+
+// 獨特性標籤
+const uniqueTags = computed(() => {
+  const tags: string[] = []
+  const dp = discPercent.value
+  
+  if (dp.D && dp.D > 30) tags.push('決策果斷')
+  if (dp.I && dp.I > 30) tags.push('善於溝通')
+  if (dp.S && dp.S > 30) tags.push('團隊協作')
+  if (dp.C && dp.C > 30) tags.push('細節導向')
+  
+  // 根據 RIASEC 添加
+  const riasecTags: Record<string, string> = {
+    'R': '實務技能', 'I': '研究探索', 'A': '創意表達',
+    'S': '助人服務', 'E': '商業敏銳', 'C': '組織規劃'
+  }
+  
+  riasecTop3.value.slice(0, 2).forEach(r => {
+    const tag = riasecTags[r]
+    if (tag) tags.push(tag)
+  })
+  
+  return tags.slice(0, 5)
+})
+
+// 工作風格描述
+const workStyleDesc = computed(() => {
+  const primary = discPrimary.value
+  const secondary = discSecondary.value
+  
+  const styles: Record<string, Record<string, string>> = {
+    'D': {
+      'I': '你是充滿魄力的推動者，既能快速決策又善於帶動團隊士氣。',
+      'S': '你是穩健的執行者，在追求目標時也注重團隊的穩定發展。',
+      'C': '你是嚴謹的策略家，決策果斷的同時也注重數據分析。'
+    },
+    'I': {
+      'D': '你是有影響力的領袖，善於激勵團隊向目標邁進。',
+      'S': '你是溫暖的溝通者，在活躍氣氛的同時也關心每個人。',
+      'C': '你是有條理的表達者，創意豐富且能將想法系統化呈現。'
+    },
+    'S': {
+      'D': '你是堅定的支持者，在維護和諧時也能在關鍵時刻果斷行動。',
+      'I': '你是親和的協調者，善於建立關係並促進團隊合作。',
+      'C': '你是細心的守護者，注重流程規範同時也關心團隊氛圍。'
+    },
+    'C': {
+      'D': '你是果斷的分析師，追求品質同時也重視效率。',
+      'I': '你是善於表達的研究者，能將複雜概念生動地呈現。',
+      'S': '你是謹慎的規劃者，在追求準確時也顧及團隊感受。'
+    }
+  }
+  
+  return styles[primary]?.[secondary] || '你擁有獨特的工作風格組合。'
+})
+
 // DISC 類型名稱
-const discNames: Record<string, { name: string; color: string }> = {
-  D: { name: '主導型', color: 'red' },
-  I: { name: '影響型', color: 'yellow' },
-  S: { name: '穩定型', color: 'green' },
-  C: { name: '謹慎型', color: 'blue' }
+const discNames: Record<string, { name: string; color: string; description: string }> = {
+  D: { name: '主導型', color: 'red', description: '目標導向、果斷決策' },
+  I: { name: '影響型', color: 'yellow', description: '熱情外向、善於溝通' },
+  S: { name: '穩定型', color: 'green', description: '耐心可靠、團隊合作' },
+  C: { name: '謹慎型', color: 'blue', description: '注重細節、追求品質' }
+}
+
+// RIASEC 類型詳細資訊
+const riasecInfo: Record<string, { name: string; icon: string; desc: string }> = {
+  R: { name: '實作型', icon: '🔧', desc: '喜歡動手操作與實務工作' },
+  I: { name: '研究型', icon: '🔬', desc: '熱愛探索知識與研究分析' },
+  A: { name: '藝術型', icon: '🎨', desc: '追求創意表達與美感設計' },
+  S: { name: '社會型', icon: '🤝', desc: '樂於助人與社會服務' },
+  E: { name: '企業型', icon: '💼', desc: '擅長領導管理與商業活動' },
+  C: { name: '事務型', icon: '📋', desc: '偏好組織規劃與行政工作' }
 }
 
 // 提交數據到 Google Sheets
@@ -88,7 +203,7 @@ async function submitData() {
       nickname: nickname.value || '匿名',
       completedAt: new Date().toISOString(),
       personalityType: personalityType.value?.id || '',
-      relatedTypes: relatedTypes.value.map(t => t.id),
+      relatedTypes: relatedTypes.value.map((t: PersonalityType) => t.id),
       scores: {
         disc: analysisResult.value.discScores,
         riasec: analysisResult.value.riasecScores
@@ -127,7 +242,7 @@ async function submitData() {
         nickname: nickname.value || '匿名',
         completedAt: new Date().toISOString(),
         personalityType: personalityType.value.id,
-        relatedTypes: relatedTypes.value.map(t => t.id),
+        relatedTypes: relatedTypes.value.map((t: PersonalityType) => t.id),
         scores: {
           disc: analysisResult.value.discScores,
           riasec: analysisResult.value.riasecScores
@@ -211,7 +326,13 @@ async function downloadPdf() {
       discPercent: discPercent.value,
       riasecScores: riasecScoresRecord,
       relatedTypes: relatedTypes.value,
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
+      // 新增個人化數據
+      branchRoute: storyManager.currentBranch as 'entrepreneur' | 'teamwork' | 'specialist' | undefined,
+      totalChoices: storyManager.allChoices.length,
+      confidence: confidence.value,
+      uniqueTags: uniqueTags.value,
+      personalSummary: personalSummary.value
     }, {
       onProgress: (step, current, total) => {
         pdfProgress.value = `${step} (${current}/${total})`
@@ -297,110 +418,265 @@ onMounted(() => {
 
     <!-- 結果內容 -->
     <div v-else-if="personalityType" class="result-content">
-      <!-- 頂部標題 -->
+      <!-- 頂部標題 - 增強版 -->
       <header class="result-header">
         <div class="header-inner">
-          <p class="header-subtitle">你的新語市人格類型是</p>
-          <h1 class="header-title">
-            <span class="type-icon">{{ personalityType.icon }}</span>
-            <span class="type-name">{{ personalityType.name }}</span>
-          </h1>
-          <p class="header-tagline">{{ personalityType.tagline }}</p>
+          <!-- 裝飾性背景元素 -->
+          <div class="header-decoration">
+            <div class="deco-circle deco-1"></div>
+            <div class="deco-circle deco-2"></div>
+            <div class="deco-circle deco-3"></div>
+          </div>
+          
+          <p class="header-subtitle">🏙️ 新語市職業探索 · 你的專屬分析</p>
+          
+          <!-- 主類型展示 -->
+          <div class="type-showcase">
+            <div class="type-icon-wrapper">
+              <span class="type-icon-large">{{ personalityType.icon }}</span>
+              <div class="type-icon-ring"></div>
+            </div>
+            <h1 class="header-title">{{ personalityType.name }}</h1>
+            <p class="header-tagline">{{ personalityType.tagline }}</p>
+          </div>
+          
+          <!-- 分支路線標籤 -->
+          <div v-if="branchInfo" class="branch-badge" :style="{ backgroundColor: branchInfo.color + '20', borderColor: branchInfo.color }">
+            <span class="branch-icon">{{ branchInfo.icon }}</span>
+            <span class="branch-name">{{ branchInfo.name }}</span>
+          </div>
+          
+          <!-- 獨特性標籤 -->
+          <div class="unique-tags">
+            <span 
+              v-for="tag in uniqueTags" 
+              :key="tag" 
+              class="unique-tag"
+            >
+              {{ tag }}
+            </span>
+          </div>
+          
+          <!-- 分析信心度 -->
+          <div class="confidence-indicator">
+            <span class="confidence-label">分析精準度</span>
+            <div class="confidence-bar">
+              <div class="confidence-fill" :style="{ width: `${confidence}%` }"></div>
+            </div>
+            <span class="confidence-value">{{ confidence }}%</span>
+          </div>
         </div>
       </header>
 
       <!-- 主要內容 -->
       <main class="result-main">
-        <!-- 人格描述卡片 -->
-        <section class="result-card">
-          <h2 class="card-title">關於你的類型</h2>
-          <p class="card-description">{{ personalityType.description }}</p>
+        <!-- 個人化摘要卡片 -->
+        <section class="result-card card-summary">
+          <div class="summary-header">
+            <span class="summary-icon">📋</span>
+            <h2 class="card-title">你的個人畫像</h2>
+          </div>
+          <p class="summary-text">{{ personalSummary }}</p>
+          <div class="work-style-box">
+            <span class="work-style-label">你的工作風格</span>
+            <p class="work-style-text">{{ workStyleDesc }}</p>
+          </div>
+        </section>
+        
+        <!-- 人格描述卡片 - 增強版 -->
+        <section class="result-card card-description">
+          <h2 class="card-title">
+            <span class="title-icon">📖</span>
+            關於「{{ personalityType.name }}」
+          </h2>
+          <div class="description-content">
+            <p class="card-description">{{ personalityType.description }}</p>
+          </div>
+          <div class="interpersonal-box">
+            <span class="interpersonal-label">👥 人際互動風格</span>
+            <p class="interpersonal-text">{{ personalityType.interpersonalStyle }}</p>
+          </div>
         </section>
 
-        <!-- DISC 分析 -->
-        <section class="result-card">
-          <h2 class="card-title">DISC 性格傾向</h2>
+        <!-- DISC 分析 - 增強版 -->
+        <section class="result-card card-disc">
+          <h2 class="card-title">
+            <span class="title-icon">🎭</span>
+            DISC 性格傾向分析
+          </h2>
+          <p class="card-subtitle-text">四種行為風格的分布，展現你的決策與互動模式</p>
+          
+          <!-- 主要/次要類型顯示 -->
+          <div class="disc-primary-display">
+            <div class="disc-type-box primary">
+              <span class="type-label">主要傾向</span>
+              <span class="type-letter" :class="`type-${discPrimary}`">{{ discPrimary }}</span>
+              <span class="type-name">{{ discNames[discPrimary]?.name }}</span>
+              <span class="type-desc">{{ discNames[discPrimary]?.description }}</span>
+            </div>
+            <div class="disc-type-connector">+</div>
+            <div class="disc-type-box secondary">
+              <span class="type-label">次要傾向</span>
+              <span class="type-letter" :class="`type-${discSecondary}`">{{ discSecondary }}</span>
+              <span class="type-name">{{ discNames[discSecondary]?.name }}</span>
+              <span class="type-desc">{{ discNames[discSecondary]?.description }}</span>
+            </div>
+          </div>
+          
+          <!-- DISC 條狀圖 -->
           <div class="disc-bars">
             <div v-for="(info, key) in discNames" :key="key" class="disc-bar-item">
-              <span class="disc-label">{{ info.name }}</span>
+              <div class="disc-bar-header">
+                <span class="disc-letter" :class="`disc-${info.color}`">{{ key }}</span>
+                <span class="disc-label">{{ info.name }}</span>
+              </div>
               <div class="disc-bar-track">
                 <div 
                   class="disc-bar-fill"
                   :class="`disc-${info.color}`"
-                  :style="{ width: `${discPercent[key as keyof typeof discPercent]}%` }"
+                  :style="{ width: `${discPercent[key as keyof typeof discPercent] || 0}%` }"
                 ></div>
               </div>
-              <span class="disc-value">{{ discPercent[key as keyof typeof discPercent] }}%</span>
+              <span class="disc-value">{{ discPercent[key as keyof typeof discPercent] || 0 }}%</span>
             </div>
           </div>
         </section>
 
-        <!-- RIASEC 職業興趣雷達圖 -->
-        <section class="result-card">
-          <h2 class="card-title">🎯 RIASEC 職業興趣分布</h2>
-          <p class="card-subtitle-text">點擊雷達圖各頂點查看詳細說明</p>
+        <!-- RIASEC 職業興趣 - 增強版 -->
+        <section class="result-card card-riasec">
+          <h2 class="card-title">
+            <span class="title-icon">🎯</span>
+            RIASEC 職業興趣分布
+          </h2>
+          <p class="card-subtitle-text">根據 Holland 職業興趣理論，分析你的六大職業傾向</p>
+          
+          <!-- 雷達圖 -->
           <RiasecRadarChart :scores="riasecScores" :animated="true" />
+          
+          <!-- 前三高興趣 -->
+          <div class="riasec-top3">
+            <h3 class="top3-title">🏆 你的前三大職業興趣</h3>
+            <div class="top3-list">
+              <div 
+                v-for="(code, index) in riasecTop3" 
+                :key="code" 
+                class="top3-item"
+                :class="`rank-${index + 1}`"
+              >
+                <span class="top3-rank">{{ index + 1 }}</span>
+                <span class="top3-icon">{{ riasecInfo[code]?.icon }}</span>
+                <div class="top3-info">
+                  <span class="top3-name">{{ riasecInfo[code]?.name }}</span>
+                  <span class="top3-desc">{{ riasecInfo[code]?.desc }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <!-- 優勢與盲點 -->
+        <!-- 優勢與盲點 - 增強版 -->
         <div class="two-column">
           <section class="result-card card-strength">
-            <h3 class="card-subtitle">✨ 你的優勢</h3>
+            <h3 class="card-subtitle">
+              <span class="subtitle-icon">✨</span>
+              你的核心優勢
+            </h3>
             <ul class="trait-list">
               <li 
                 v-for="(strength, index) in personalityType.strengths" 
                 :key="index"
+                class="trait-item"
               >
-                <span class="trait-dot strength"></span>
-                {{ strength }}
+                <span class="trait-number">{{ index + 1 }}</span>
+                <span class="trait-text">{{ strength }}</span>
               </li>
             </ul>
           </section>
           
           <section class="result-card card-growth">
-            <h3 class="card-subtitle">🔍 成長空間</h3>
+            <h3 class="card-subtitle">
+              <span class="subtitle-icon">🌱</span>
+              成長機會點
+            </h3>
             <ul class="trait-list">
               <li 
                 v-for="(blindSpot, index) in personalityType.blindSpots" 
                 :key="index"
+                class="trait-item"
               >
-                <span class="trait-dot growth"></span>
-                {{ blindSpot }}
+                <span class="trait-number">{{ index + 1 }}</span>
+                <span class="trait-text">{{ blindSpot }}</span>
               </li>
             </ul>
           </section>
         </div>
 
-        <!-- 職業建議 -->
-        <section class="result-card">
-          <h2 class="card-title">💼 適合的職業方向</h2>
+        <!-- 職業建議 - 增強版 -->
+        <section class="result-card card-career">
+          <h2 class="card-title">
+            <span class="title-icon">💼</span>
+            適合的職業方向
+          </h2>
+          <p class="card-subtitle-text">根據你的性格特質與興趣傾向，推薦以下職業方向</p>
+          
           <div class="career-list">
             <div 
-              v-for="career in personalityType.careers"
+              v-for="(career, index) in personalityType.careers"
               :key="career.title"
               class="career-item"
+              :class="{ 'top-match': index === 0 }"
             >
+              <div class="career-rank" v-if="index < 3">
+                <span v-if="index === 0">🥇</span>
+                <span v-else-if="index === 1">🥈</span>
+                <span v-else>🥉</span>
+              </div>
               <div class="career-info">
                 <p class="career-title">{{ career.title }}</p>
                 <p class="career-desc">{{ career.description }}</p>
               </div>
               <div class="career-match">
-                <span class="match-value">{{ career.matchPercent }}%</span>
+                <div class="match-ring" :style="{ '--match-percent': career.matchPercent }">
+                  <span class="match-value">{{ career.matchPercent }}%</span>
+                </div>
                 <span class="match-label">匹配度</span>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- 成長建議 -->
+        <!-- 成長建議 - 增強版 -->
         <section class="result-card card-advice">
-          <h2 class="card-title">💡 給你的建議</h2>
-          <p class="advice-text">{{ personalityType.growthAdvice }}</p>
+          <div class="advice-header">
+            <span class="advice-icon">💡</span>
+            <h2 class="card-title">給你的專屬建議</h2>
+          </div>
+          <div class="advice-content">
+            <p class="advice-text">{{ personalityType.growthAdvice }}</p>
+          </div>
+          <div class="advice-tips">
+            <div class="tip-item">
+              <span class="tip-icon">📚</span>
+              <span class="tip-text">持續學習，拓展視野</span>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">🤝</span>
+              <span class="tip-text">與不同類型的人合作</span>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">🎯</span>
+              <span class="tip-text">設定明確目標，定期檢視</span>
+            </div>
+          </div>
         </section>
 
-        <!-- 相近類型 -->
-        <section v-if="relatedTypes.length > 0" class="result-card">
-          <h2 class="card-title">🔗 與你相近的類型</h2>
+        <!-- 相近類型 - 增強版 -->
+        <section v-if="relatedTypes.length > 0" class="result-card card-related">
+          <h2 class="card-title">
+            <span class="title-icon">🔗</span>
+            與你相近的類型
+          </h2>
+          <p class="card-subtitle-text">這些類型與你有相似特質，了解他們能幫助你更認識自己</p>
           <div class="related-types">
             <button 
               v-for="related in relatedTypes"
@@ -409,8 +685,11 @@ onMounted(() => {
               @click="goToGallery"
             >
               <span class="related-icon">{{ related.icon }}</span>
-              <span class="related-name">{{ related.name }}</span>
-              <span class="related-hint">點擊了解更多</span>
+              <div class="related-info">
+                <span class="related-name">{{ related.name }}</span>
+                <span class="related-tagline">{{ related.tagline }}</span>
+              </div>
+              <span class="related-arrow">→</span>
             </button>
           </div>
         </section>
@@ -419,8 +698,11 @@ onMounted(() => {
         <TheoryAccordion />
 
         <!-- 暱稱輸入與提交 -->
-        <section v-if="!submitSuccess" class="result-card">
-          <h2 class="card-title">📝 保存你的結果</h2>
+        <section v-if="!submitSuccess" class="result-card card-submit">
+          <h2 class="card-title">
+            <span class="title-icon">📝</span>
+            保存你的結果
+          </h2>
           <p class="card-hint">⚠️ 必須保存結果後才能下載 PDF 報告</p>
           <div class="submit-form">
             <div class="input-group">
@@ -627,6 +909,28 @@ onMounted(() => {
   font-size: var(--text-base);
   opacity: 0.9;
   font-style: italic;
+}
+
+/* 分支路線標籤 */
+.branch-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  border: 2px solid;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+.branch-icon {
+  font-size: 1.1em;
+}
+
+.branch-name {
+  color: white;
 }
 
 /* 主要內容 */
@@ -1240,10 +1544,695 @@ onMounted(() => {
   }
 }
 
+/* ==================== 增強版樣式 ==================== */
+
+/* Header 裝飾元素 */
+.header-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  background: white;
+}
+
+.deco-1 {
+  width: 300px;
+  height: 300px;
+  top: -150px;
+  right: -100px;
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+.deco-2 {
+  width: 200px;
+  height: 200px;
+  bottom: -100px;
+  left: -50px;
+  animation: floatSlow 10s ease-in-out infinite reverse;
+}
+
+.deco-3 {
+  width: 100px;
+  height: 100px;
+  top: 50%;
+  left: 10%;
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+/* 類型展示區 */
+.type-showcase {
+  margin: var(--spacing-lg) 0;
+}
+
+.type-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: var(--spacing-md);
+}
+
+.type-icon-large {
+  font-size: 4rem;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.type-icon-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes ringPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.5; }
+}
+
+/* 獨特性標籤 */
+.unique-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin: var(--spacing-md) 0;
+}
+
+.unique-tag {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 信心度指示器 */
+.confidence-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(4px);
+}
+
+.confidence-label {
+  font-size: var(--text-xs);
+  opacity: 0.8;
+}
+
+.confidence-bar {
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+}
+
+.confidence-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* 個人化摘要卡片 */
+.card-summary {
+  background: linear-gradient(135deg, #FFF9F0 0%, #FFF3E0 100%);
+  border: 1px solid #FFE0B2;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.summary-icon {
+  font-size: 1.5rem;
+}
+
+.summary-text {
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--color-text-primary);
+}
+
+.work-style-box {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--color-primary);
+}
+
+.work-style-label {
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.work-style-text {
+  margin-top: var(--spacing-xs);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+}
+
+/* 人格描述卡片增強 */
+.card-description {
+  position: relative;
+}
+
+.card-description .card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.title-icon {
+  font-size: 1.2em;
+}
+
+.description-content {
+  position: relative;
+  padding-left: var(--spacing-md);
+  border-left: 3px solid var(--color-bg-tertiary);
+}
+
+.interpersonal-box {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, #F3E5F5 0%, #EDE7F6 100%);
+  border-radius: var(--radius-lg);
+}
+
+.interpersonal-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #7B1FA2;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.interpersonal-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* DISC 卡片增強 */
+.card-disc .card-subtitle-text {
+  margin-top: 0;
+}
+
+.disc-primary-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+}
+
+.disc-type-box {
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.disc-type-box .type-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.disc-type-box .type-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto var(--spacing-xs);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  border-radius: 50%;
+}
+
+.type-D { background: linear-gradient(135deg, #EF5350, #C62828); }
+.type-I { background: linear-gradient(135deg, #FFCA28, #F9A825); }
+.type-S { background: linear-gradient(135deg, #66BB6A, #388E3C); }
+.type-C { background: linear-gradient(135deg, #42A5F5, #1976D2); }
+
+.disc-type-box .type-name {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.disc-type-box .type-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.disc-type-connector {
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  font-weight: 300;
+}
+
+/* DISC 條狀圖增強 */
+.disc-bar-item {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.disc-bar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.disc-letter {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: white;
+  border-radius: 6px;
+}
+
+/* RIASEC 前三高 */
+.riasec-top3 {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-bg-tertiary);
+}
+
+.top3-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.top3-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.top3-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  transition: transform 0.2s ease;
+}
+
+.top3-item:hover {
+  transform: translateX(4px);
+}
+
+.top3-item.rank-1 {
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+  border: 1px solid #FFD54F;
+}
+
+.top3-item.rank-2 {
+  background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%);
+  border: 1px solid #B0BEC5;
+}
+
+.top3-item.rank-3 {
+  background: linear-gradient(135deg, #FBE9E7 0%, #FFCCBC 100%);
+  border: 1px solid #FFAB91;
+}
+
+.top3-rank {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.top3-icon {
+  font-size: 1.5rem;
+}
+
+.top3-info {
+  flex: 1;
+}
+
+.top3-name {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.top3-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* 特質列表增強 */
+.trait-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+}
+
+.trait-number {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-strength .trait-number {
+  background: #C8E6C9;
+  color: #2E7D32;
+}
+
+.card-growth .trait-number {
+  background: #FFCC80;
+  color: #E65100;
+}
+
+.trait-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.subtitle-icon {
+  font-size: 1.2em;
+}
+
+/* 職業建議卡片增強 */
+.card-career .career-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-sm);
+  transition: all 0.2s ease;
+}
+
+.card-career .career-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-career .career-item.top-match {
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  border: 2px solid #64B5F6;
+}
+
+.career-rank {
+  font-size: 1.5rem;
+}
+
+.career-info {
+  flex: 1;
+}
+
+.career-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+}
+
+.career-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.career-match {
+  text-align: center;
+}
+
+.match-ring {
+  --match-percent: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--color-primary) calc(var(--match-percent) * 3.6deg),
+    var(--color-bg-tertiary) 0
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.match-ring::before {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: white;
+  border-radius: 50%;
+}
+
+.match-value {
+  position: relative;
+  z-index: 1;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.match-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* 建議卡片增強 */
+.card-advice {
+  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+  border: 1px solid #A5D6A7;
+}
+
+.advice-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.advice-icon {
+  font-size: 2rem;
+}
+
+.advice-content {
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.advice-text {
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.advice-tips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.tip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-md);
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.tip-text {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}
+
+/* 相關類型卡片增強 */
+.card-related .related-type-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-related .related-type-btn:hover {
+  border-color: var(--color-primary);
+  transform: translateX(4px);
+}
+
+.related-icon {
+  font-size: 2rem;
+}
+
+.related-info {
+  flex: 1;
+}
+
+.related-name {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.related-tagline {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.related-arrow {
+  font-size: 1.2rem;
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.card-related .related-type-btn:hover .related-arrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* 提交卡片 */
+.card-submit .card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 /* 安全區域適配 */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .result-content {
     padding-bottom: calc(var(--spacing-3xl) + env(safe-area-inset-bottom));
+  }
+}
+
+/* 響應式調整 */
+@media (max-width: 480px) {
+  .disc-primary-display {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .disc-type-connector {
+    display: none;
+  }
+  
+  .advice-tips {
+    grid-template-columns: 1fr;
   }
 }
 </style>
