@@ -1,0 +1,22 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "RIASEC",
+    "Marston",
+    "chartjs",
+    "jspdf",
+    "tailwindcss",
+    "vitejs",
+    "vuejs",
+    "pnpm",
+    "vite",
+    "tsbuildinfo"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "*.lock",
+    "package-lock.json"
+  ]
+}
