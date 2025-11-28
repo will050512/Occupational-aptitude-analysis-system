@@ -18,6 +18,15 @@ export interface PdfReportData {
   completedAt: string
 }
 
+export interface PdfGeneratorOptions {
+  onProgress?: (step: string, current: number, total: number) => void
+}
+
+// 檢測是否為移動設備
+function isMobileDevice(): boolean {
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches
+}
+
 // DISC 類型資訊
 const discInfo: Record<string, { name: string; nameCn: string; color: string }> = {
   D: { name: 'Dominance', nameCn: '主導型', color: '#EF5350' },
@@ -141,9 +150,15 @@ export class PdfGenerator {
 
   /**
    * 生成並下載 PDF 報告
+   * @param data 報告數據
+   * @param options 選項（包含進度回調）
    */
-  async generateReport(data: PdfReportData): Promise<void> {
+  async generateReport(data: PdfReportData, options?: PdfGeneratorOptions): Promise<void> {
+    const { onProgress } = options || {}
+    const totalPages = 6
+    
     // 預先載入 Logo
+    onProgress?.('正在準備資源...', 0, totalPages)
     try {
       this.logoBase64 = await getLogoBase64()
     } catch (error) {
@@ -175,26 +190,32 @@ export class PdfGenerator {
       const pdfHeight = pdf.internal.pageSize.getHeight()
 
       // 第一頁：封面
+      onProgress?.('正在生成封面...', 1, totalPages)
       container.innerHTML = this.renderCoverPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, false)
 
       // 第二頁：DISC 分析
+      onProgress?.('正在生成 DISC 分析...', 2, totalPages)
       container.innerHTML = this.renderDiscPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
       // 第三頁：RIASEC 職業興趣分析
+      onProgress?.('正在生成 RIASEC 分析...', 3, totalPages)
       container.innerHTML = this.renderRiasecPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
       // 第四頁：優勢與成長
+      onProgress?.('正在生成優勢分析...', 4, totalPages)
       container.innerHTML = this.renderStrengthsPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
       // 第五頁：職業建議
+      onProgress?.('正在生成職業建議...', 5, totalPages)
       container.innerHTML = this.renderCareersPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
       // 第六頁：理論基礎
+      onProgress?.('正在生成理論基礎...', 6, totalPages)
       container.innerHTML = this.renderTheoryPage()
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
@@ -214,22 +235,33 @@ export class PdfGenerator {
     _pdfHeight: number,
     addNewPage: boolean
   ): Promise<void> {
-    const canvas = await html2canvas(container, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff'
-    })
+    // 移動設備使用較低的 scale 以減少記憶體使用
+    const scale = isMobileDevice() ? 1.5 : 2
+    
+    try {
+      const canvas = await html2canvas(container, {
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        // @ts-expect-error timeout 是 html2canvas 支援但未在類型中定義的選項
+        timeout: 30000
+      })
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95)
-    const imgWidth = pdfWidth
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width
+      const imgData = canvas.toDataURL('image/jpeg', 0.95)
+      const imgWidth = pdfWidth
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width
 
-    if (addNewPage) {
-      pdf.addPage()
+      if (addNewPage) {
+        pdf.addPage()
+      }
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      throw new Error(`頁面渲染失敗: ${errorMessage}`)
     }
-
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
   }
 
   private renderCoverPage(data: PdfReportData): string {
@@ -550,18 +582,19 @@ export class PdfGenerator {
       normalizedScores[key] = total > 0 ? Math.round((data.riasecScores[key] || 0) / total * 100) : 17
     }
 
-    // 生成六邊形雷達圖的 SVG
-    const centerX = 160
-    const centerY = 130
-    const maxRadius = 100
+    // 生成六邊形雷達圖的 SVG - 修正座標計算
+    const centerX = 200
+    const centerY = 160
+    const maxRadius = 120
     const points = ['R', 'I', 'A', 'S', 'E', 'C']
     
-    // 計算六邊形各頂點
+    // 計算六邊形各頂點 - 從正上方開始，順時針排列
     const getPoint = (index: number, radius: number) => {
-      const angle = (Math.PI / 2) + (index * Math.PI / 3)
+      // 從 -90 度（正上方）開始，每個點間隔 60 度，順時針方向
+      const angle = (-Math.PI / 2) + (index * Math.PI / 3)
       return {
         x: centerX + radius * Math.cos(angle),
-        y: centerY - radius * Math.sin(angle)
+        y: centerY + radius * Math.sin(angle)
       }
     }
 
@@ -569,33 +602,33 @@ export class PdfGenerator {
     const gridLines = [0.25, 0.5, 0.75, 1].map(ratio => {
       const pts = points.map((_, i) => {
         const p = getPoint(i, maxRadius * ratio)
-        return `${p.x},${p.y}`
+        return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
       })
-      return `<polygon points="${pts.join(' ')}" fill="none" stroke="#E0E0E0" stroke-width="1"/>`
+      return `<polygon points="${pts.join(' ')}" fill="none" stroke="#D0D0D0" stroke-width="1.5"/>`
     }).join('')
 
     // 生成軸線
     const axisLines = points.map((_, i) => {
       const p = getPoint(i, maxRadius)
-      return `<line x1="${centerX}" y1="${centerY}" x2="${p.x}" y2="${p.y}" stroke="#E0E0E0" stroke-width="1"/>`
+      return `<line x1="${centerX}" y1="${centerY}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#D0D0D0" stroke-width="1.5"/>`
     }).join('')
 
     // 生成數據多邊形
     const dataPoints = points.map((key, i) => {
       const value = normalizedScores[key] || 0
       const p = getPoint(i, (value / 100) * maxRadius)
-      return `${p.x},${p.y}`
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
     })
 
-    // 生成標籤
+    // 生成標籤 - 增大字體並調整位置
     const labels = points.map((key, i) => {
-      const p = getPoint(i, maxRadius + 25)
+      const p = getPoint(i, maxRadius + 35)
       const info = riasecInfo[key]!
       return `
-        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="${info.color}">
+        <text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="14" font-weight="bold" fill="${info.color}" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
           ${info.icon} ${info.name}
         </text>
-        <text x="${p.x}" y="${p.y + 13}" text-anchor="middle" font-size="10" fill="#666">
+        <text x="${p.x.toFixed(1)}" y="${(p.y + 16).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="bold" fill="#333" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
           ${normalizedScores[key]}%
         </text>
       `
@@ -627,20 +660,20 @@ export class PdfGenerator {
           <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">探索您的職業興趣傾向，找到適合的職業方向</p>
         </div>
 
-        <!-- 雷達圖 -->
-        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 15px; margin-bottom: 14px; border: 1px solid #E8E8E8;">
-          <svg width="320" height="260" viewBox="0 0 320 260" style="display: block; margin: 0 auto;">
+        <!-- 雷達圖 - 增大尺寸並置中 -->
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #E8E8E8;">
+          <svg width="400" height="340" viewBox="0 0 400 340" style="display: block; margin: 0 auto;">
             <!-- 網格 -->
             ${gridLines}
             <!-- 軸線 -->
             ${axisLines}
-            <!-- 數據區域 -->
-            <polygon points="${dataPoints.join(' ')}" fill="rgba(99, 102, 241, 0.25)" stroke="rgba(99, 102, 241, 0.8)" stroke-width="2"/>
-            <!-- 數據點 -->
+            <!-- 數據區域 - 增加填充對比度 -->
+            <polygon points="${dataPoints.join(' ')}" fill="rgba(99, 102, 241, 0.35)" stroke="rgba(99, 102, 241, 0.9)" stroke-width="2.5"/>
+            <!-- 數據點 - 增大尺寸 -->
             ${points.map((key, i) => {
               const value = normalizedScores[key] || 0
               const p = getPoint(i, (value / 100) * maxRadius)
-              return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="2"/>`
+              return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="6" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="2.5"/>`
             }).join('')}
             <!-- 標籤 -->
             ${labels}
@@ -780,7 +813,30 @@ export class PdfGenerator {
 }
 
 // 便捷函數
-export async function downloadPdfReport(data: PdfReportData): Promise<void> {
+export async function downloadPdfReport(
+  data: PdfReportData, 
+  options?: PdfGeneratorOptions
+): Promise<void> {
   const generator = new PdfGenerator()
-  await generator.generateReport(data)
+  await generator.generateReport(data, options)
+}
+
+// 生成錯誤詳情用於客服
+export function generateErrorDetail(error: unknown): string {
+  const timestamp = new Date().toISOString()
+  const userAgent = navigator.userAgent
+  const errorMessage = error instanceof Error ? error.message : String(error)
+  const errorStack = error instanceof Error ? error.stack : 'No stack trace'
+  
+  return `
+=== PDF 生成錯誤報告 ===
+時間: ${timestamp}
+瀏覽器: ${userAgent}
+螢幕: ${window.innerWidth}x${window.innerHeight}
+設備類型: ${isMobileDevice() ? '移動設備' : '桌面設備'}
+錯誤訊息: ${errorMessage}
+錯誤堆疊:
+${errorStack}
+========================
+`.trim()
 }

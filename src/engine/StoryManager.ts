@@ -259,7 +259,7 @@ export class StoryManager {
     const progress = {
       sessionId: StorageService.getSessionId(),
       currentChapter: this.state.value.currentChapterIndex,
-      currentScene: this.state.value.currentChapterIndex, // Scene as number for type compat
+      currentScene: this.state.value.currentSceneId, // 儲存場景 ID 以正確還原進度
       choices: this.state.value.choices.map(c => ({
         questionId: `Q${c.questionNumber}`,
         choiceIndex: parseInt(c.choiceId) || 0,

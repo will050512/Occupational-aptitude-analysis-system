@@ -112,6 +112,29 @@
   --z-modal: 200;
   --z-toast: 300;
   --z-splash: 400;
+  
+  /* 雷達圖響應式設定 */
+  --radar-label-size: 14px;
+  --radar-tick-size: 10px;
+  --radar-point-radius: 6px;
+}
+
+/* 雷達圖響應式覆寫 - 平板 */
+@media (min-width: 480px) {
+  :root {
+    --radar-label-size: 16px;
+    --radar-tick-size: 11px;
+    --radar-point-radius: 7px;
+  }
+}
+
+/* 雷達圖響應式覆寫 - 桌面 */
+@media (min-width: 768px) {
+  :root {
+    --radar-label-size: 18px;
+    --radar-tick-size: 12px;
+    --radar-point-radius: 8px;
+  }
 }
 
 /* ========================================

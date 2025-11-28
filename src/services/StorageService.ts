@@ -15,7 +15,7 @@ const STORAGE_KEYS = {
 export interface GameProgress {
   sessionId: string
   currentChapter: number
-  currentScene: number
+  currentScene: string | number  // 支援場景 ID（字串）或舊版索引（數字）
   choices: ChoiceRecord[]
   startedAt: string
   lastUpdatedAt: string

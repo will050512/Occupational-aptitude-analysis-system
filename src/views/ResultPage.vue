@@ -6,7 +6,7 @@ import { analyzePersonality, normalizeScores } from '@/utils/PersonalityAnalyzer
 import { StorageService } from '@/services/StorageService'
 import { DataSubmitter } from '@/services/DataSubmitter'
 import { SessionService } from '@/services/SessionService'
-import { downloadPdfReport } from '@/services/PdfGenerator'
+import { downloadPdfReport, generateErrorDetail } from '@/services/PdfGenerator'
 import RiasecRadarChart from '@/components/RiasecRadarChart.vue'
 import TheoryAccordion from '@/components/TheoryAccordion.vue'
 
@@ -22,6 +22,13 @@ const submitError = ref('')
 const showShareToast = ref(false)
 const isGeneratingPdf = ref(false)
 const toastMessage = ref('')
+
+// PDF 生成相關狀態
+const pdfProgress = ref('')
+const pdfError = ref('')
+const pdfErrorDetail = ref('')
+const pdfRetryCount = ref(0)
+const maxPdfRetries = 3
 
 // 分析結果
 const analysisResult = computed(() => {
@@ -168,6 +175,8 @@ async function downloadPdf() {
   if (!personalityType.value || !analysisResult.value || isGeneratingPdf.value) return
   
   isGeneratingPdf.value = true
+  pdfError.value = ''
+  pdfProgress.value = '正在準備...'
   
   try {
     const discScoresRecord: Record<string, number> = {
@@ -194,13 +203,38 @@ async function downloadPdf() {
       riasecScores: riasecScoresRecord,
       relatedTypes: relatedTypes.value,
       completedAt: new Date().toISOString()
+    }, {
+      onProgress: (step, current, total) => {
+        pdfProgress.value = `${step} (${current}/${total})`
+      }
     })
+    
+    pdfProgress.value = ''
+    pdfRetryCount.value = 0  // 成功後重置重試計數
     showToast('PDF 報告已下載！')
   } catch (error) {
     console.error('PDF generation failed:', error)
-    showToast('PDF 生成失敗，請稍後再試')
+    pdfRetryCount.value++
+    pdfErrorDetail.value = generateErrorDetail(error)
+    
+    if (pdfRetryCount.value >= maxPdfRetries) {
+      pdfError.value = '多次嘗試後仍無法生成 PDF，請稍後再試或聯繫客服'
+    } else {
+      pdfError.value = `PDF 生成失敗，請重試 (${pdfRetryCount.value}/${maxPdfRetries})`
+    }
   } finally {
     isGeneratingPdf.value = false
+    pdfProgress.value = ''
+  }
+}
+
+// 複製錯誤詳情到剪貼簿
+async function copyErrorDetail() {
+  try {
+    await navigator.clipboard.writeText(pdfErrorDetail.value)
+    showToast('錯誤資訊已複製到剪貼簿')
+  } catch {
+    showToast('複製失敗，請手動複製')
   }
 }
 
@@ -230,8 +264,8 @@ function goToGallery() {
 }
 
 onMounted(() => {
-  // 如果沒有結果，重定向回首頁
-  if (!analysisResult.value || storyManager.allChoices.length < 16) {
+  // 如果沒有結果，重定向回首頁（放寬條件為 >= 14 題）
+  if (!analysisResult.value || storyManager.allChoices.length < 14) {
     router.push('/')
     return
   }
@@ -407,13 +441,49 @@ onMounted(() => {
 
         <!-- 操作按鈕 -->
         <div class="action-buttons">
-          <button 
-            @click="downloadPdf" 
-            :disabled="isGeneratingPdf"
-            class="action-btn btn-pdf"
-          >
-            {{ isGeneratingPdf ? '⏳ 生成中...' : '📄 下載 PDF 報告' }}
-          </button>
+          <!-- PDF 下載區塊 -->
+          <div class="pdf-section">
+            <button 
+              @click="downloadPdf" 
+              :disabled="isGeneratingPdf || pdfRetryCount >= maxPdfRetries"
+              class="action-btn btn-pdf"
+            >
+              <template v-if="isGeneratingPdf">
+                ⏳ {{ pdfProgress || '生成中...' }}
+              </template>
+              <template v-else-if="pdfRetryCount >= maxPdfRetries">
+                ❌ 無法生成 PDF
+              </template>
+              <template v-else>
+                📄 下載 PDF 報告
+              </template>
+            </button>
+            
+            <!-- PDF 錯誤與重試 -->
+            <div v-if="pdfError" class="pdf-error-section">
+              <p class="error-text">{{ pdfError }}</p>
+              <div class="error-actions">
+                <button 
+                  v-if="pdfRetryCount < maxPdfRetries"
+                  @click="downloadPdf"
+                  :disabled="isGeneratingPdf"
+                  class="retry-btn"
+                >
+                  🔄 重試 ({{ pdfRetryCount }}/{{ maxPdfRetries }})
+                </button>
+                <button 
+                  v-if="pdfErrorDetail"
+                  @click="copyErrorDetail"
+                  class="copy-error-btn"
+                >
+                  📋 複製錯誤資訊
+                </button>
+              </div>
+              <p v-if="pdfRetryCount >= maxPdfRetries" class="max-retry-hint">
+                請稍後再試或聯繫客服
+              </p>
+            </div>
+          </div>
           
           <button @click="shareResult" class="action-btn btn-share">
             📤 分享結果
@@ -921,6 +991,77 @@ onMounted(() => {
 .btn-pdf:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* PDF 區塊 */
+.pdf-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.pdf-error-section {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.pdf-error-section .error-text {
+  color: #DC2626;
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.error-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.retry-btn,
+.copy-error-btn {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.retry-btn {
+  background: var(--color-primary);
+  color: white;
+}
+
+.retry-btn:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.retry-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.copy-error-btn {
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+}
+
+.copy-error-btn:hover {
+  background: #E5E7EB;
+}
+
+.max-retry-hint {
+  color: #6B7280;
+  font-size: var(--text-xs);
+  margin: 0;
+  text-align: center;
 }
 
 .btn-share {

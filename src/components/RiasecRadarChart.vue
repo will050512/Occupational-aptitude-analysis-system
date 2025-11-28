@@ -32,11 +32,52 @@ const emit = defineEmits<{
   (e: 'typeClick', type: RiasecType): void
 }>()
 
+// 工具函數：讀取 CSS 變數並解析為數字
+function getCssVarNumber(varName: string, fallback: number): number {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? fallback : parsed
+}
+
+// 工具函數：debounce
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  return ((...args: unknown[]) => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }) as T
+}
+
 // 狀態
 const chartRef = ref<InstanceType<typeof Radar> | null>(null)
+const containerRef = ref<HTMLElement | null>(null)
 const selectedType = ref<RiasecType | null>(null)
 const tooltipPosition = ref({ x: 0, y: 0 })
 const showTooltip = ref(false)
+
+// 響應式字體大小
+const radarLabelSize = ref(getCssVarNumber('--radar-label-size', 14))
+const radarTickSize = ref(getCssVarNumber('--radar-tick-size', 10))
+const radarPointRadius = ref(getCssVarNumber('--radar-point-radius', 6))
+
+// 更新 CSS 變數值
+function updateCssVars() {
+  radarLabelSize.value = getCssVarNumber('--radar-label-size', 14)
+  radarTickSize.value = getCssVarNumber('--radar-tick-size', 10)
+  radarPointRadius.value = getCssVarNumber('--radar-point-radius', 6)
+  
+  // 更新圖表
+  const radarInstance = chartRef.value as { chart?: { update: (mode?: string) => void } } | null
+  if (radarInstance?.chart) {
+    radarInstance.chart.update()
+  }
+}
+
+// Debounced 版本的更新函數
+const debouncedUpdateCssVars = debounce(updateCssVars, 300)
+
+// ResizeObserver
+let resizeObserver: ResizeObserver | null = null
 
 // 計算正規化的分數（百分比）
 const normalizedScores = computed(() => {
@@ -60,14 +101,14 @@ const chartData = computed<ChartData<'radar'>>(() => ({
     {
       label: '職業興趣分布',
       data: riasecHexagonOrder.map(code => normalizedScores.value[code] || 0),
-      backgroundColor: 'rgba(99, 102, 241, 0.25)',
-      borderColor: 'rgba(99, 102, 241, 0.8)',
-      borderWidth: 2,
+      backgroundColor: 'rgba(99, 102, 241, 0.35)',
+      borderColor: 'rgba(99, 102, 241, 0.9)',
+      borderWidth: 3,
       pointBackgroundColor: riasecHexagonOrder.map(code => riasecTypes[code]?.color || '#6366f1'),
       pointBorderColor: '#fff',
       pointBorderWidth: 2,
-      pointRadius: 6,
-      pointHoverRadius: 10,
+      pointRadius: radarPointRadius.value,
+      pointHoverRadius: radarPointRadius.value + 4,
       pointHoverBackgroundColor: riasecHexagonOrder.map(code => riasecTypes[code]?.color || '#6366f1'),
       pointHoverBorderColor: '#fff',
       pointHoverBorderWidth: 3,
@@ -101,25 +142,28 @@ const chartOptions = computed<ChartOptions<'radar'>>(() => ({
         stepSize: 20,
         display: true,
         backdropColor: 'transparent',
-        color: '#9CA3AF',
+        color: '#6B7280',
         font: {
-          size: 10
+          size: radarTickSize.value,
+          weight: 'bold' as const
         }
       },
       grid: {
-        color: 'rgba(156, 163, 175, 0.3)',
-        circular: false
+        color: 'rgba(156, 163, 175, 0.4)',
+        circular: false,
+        lineWidth: 1.5
       },
       angleLines: {
-        color: 'rgba(156, 163, 175, 0.3)'
+        color: 'rgba(156, 163, 175, 0.4)',
+        lineWidth: 1.5
       },
       pointLabels: {
-        color: '#374151',
+        color: '#1F2937',
         font: {
-          size: 13,
-          weight: 'bold'
+          size: radarLabelSize.value,
+          weight: 'bold' as const
         },
-        padding: 15
+        padding: 18
       }
     }
   },
@@ -183,10 +227,24 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  
+  // 設置 ResizeObserver 監聽視窗變化
+  resizeObserver = new ResizeObserver(debouncedUpdateCssVars)
+  resizeObserver.observe(document.documentElement)
+  
+  // 監聽媒體查詢變化
+  const mediaQuery = window.matchMedia('(min-width: 480px)')
+  mediaQuery.addEventListener('change', debouncedUpdateCssVars)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  
+  // 清理 ResizeObserver
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
 })
 
 // 監聽分數變化，更新圖表
@@ -199,7 +257,7 @@ watch(() => props.scores, () => {
 </script>
 
 <template>
-  <div class="riasec-radar-chart">
+  <div class="riasec-radar-chart" ref="containerRef">
     <div class="radar-chart-container">
       <Radar
         ref="chartRef"

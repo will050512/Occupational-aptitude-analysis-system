@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStoryManager } from '@/engine/StoryManager'
 import type { Choice } from '@/data/chapters'
@@ -14,6 +14,12 @@ const currentFeedback = ref('')
 const selectedChoice = ref<Choice | null>(null)
 const isTransitioning = ref(false)
 
+// 打字機效果狀態
+const displayedNarrative = ref('')
+const isTyping = ref(false)
+const typewriterTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+const typewriterSpeed = 40 // 每個字的顯示間隔 (ms)
+
 // 計算屬性
 const currentScene = computed(() => storyManager.currentScene.value)
 const currentChapter = computed(() => storyManager.currentChapter.value)
@@ -21,9 +27,63 @@ const progress = computed(() => storyManager.progressPercent.value)
 const questionNumber = computed(() => storyManager.currentQuestionNumber.value)
 const isComplete = computed(() => storyManager.isGameComplete.value)
 
+// 完整敘事文字
+const fullNarrative = computed(() => currentScene.value?.narrative || '')
+
+// 打字機效果
+function startTypewriter() {
+  if (!fullNarrative.value) return
+  
+  stopTypewriter()
+  displayedNarrative.value = ''
+  isTyping.value = true
+  
+  let index = 0
+  const text = fullNarrative.value
+  
+  function typeNextChar() {
+    if (index < text.length) {
+      displayedNarrative.value += text[index]
+      index++
+      typewriterTimer.value = setTimeout(typeNextChar, typewriterSpeed)
+    } else {
+      isTyping.value = false
+    }
+  }
+  
+  typeNextChar()
+}
+
+// 停止打字機效果
+function stopTypewriter() {
+  if (typewriterTimer.value) {
+    clearTimeout(typewriterTimer.value)
+    typewriterTimer.value = null
+  }
+}
+
+// 跳過打字機效果，顯示完整文字
+function skipTypewriter() {
+  if (isTyping.value) {
+    stopTypewriter()
+    displayedNarrative.value = fullNarrative.value
+    isTyping.value = false
+  }
+}
+
+// 監聽場景變化，開始打字機效果
+watch(currentScene, () => {
+  startTypewriter()
+}, { immediate: true })
+
 // 處理選擇
 async function handleChoice(choice: Choice) {
   if (isLoading.value || isTransitioning.value || showFeedback.value) return
+  
+  // 如果還在打字，先跳過
+  if (isTyping.value) {
+    skipTypewriter()
+  }
   
   selectedChoice.value = choice
   showFeedback.value = true
@@ -53,6 +113,12 @@ async function handleChoice(choice: Choice) {
 // 處理無選擇的過場
 function handleContinue() {
   if (isTransitioning.value) return
+  
+  // 如果還在打字，先跳過
+  if (isTyping.value) {
+    skipTypewriter()
+    return
+  }
   
   isTransitioning.value = true
   
@@ -86,6 +152,11 @@ onMounted(() => {
   if (!currentScene.value) {
     storyManager.startNewGame()
   }
+})
+
+// 清理計時器
+onUnmounted(() => {
+  stopTypewriter()
 })
 </script>
 
@@ -149,10 +220,20 @@ onMounted(() => {
         </div>
 
         <!-- 敘事文字 -->
-        <div v-if="currentScene" class="narrative-section">
+        <div v-if="currentScene" class="narrative-section" @click="skipTypewriter">
           <div class="narrative-card">
-            <p class="narrative-text">{{ currentScene.narrative }}</p>
+            <p class="narrative-text">{{ displayedNarrative }}<span v-if="isTyping" class="typing-cursor">|</span></p>
           </div>
+          <!-- 跳過提示 -->
+          <Transition name="fade">
+            <button 
+              v-if="isTyping" 
+              @click.stop="skipTypewriter" 
+              class="skip-btn"
+            >
+              點擊跳過 ⏩
+            </button>
+          </Transition>
         </div>
 
         <!-- 反饋訊息 -->
@@ -166,21 +247,27 @@ onMounted(() => {
         </Transition>
 
         <!-- 選擇按鈕 -->
-        <div 
-          v-if="currentScene?.choices && currentScene.choices.length > 0 && !showFeedback"
-          class="choices-section"
-        >
-          <button
-            v-for="choice in currentScene.choices"
-            :key="choice.id"
-            @click="handleChoice(choice)"
-            class="choice-btn"
-            :class="{ 'selected': selectedChoice?.id === choice.id }"
-            :disabled="isLoading || isTransitioning"
+        <Transition name="choices">
+          <div 
+            v-if="currentScene?.choices && currentScene.choices.length > 0 && !showFeedback && !isTyping"
+            class="choices-section"
           >
-            <span class="choice-text">{{ choice.text }}</span>
-          </button>
-        </div>
+            <p class="choices-hint">✨ 選擇你的決定</p>
+            <button
+              v-for="(choice, index) in currentScene.choices"
+              :key="choice.id"
+              @click="handleChoice(choice)"
+              class="choice-btn"
+              :class="{ 'selected': selectedChoice?.id === choice.id }"
+              :style="{ animationDelay: `${index * 0.1}s` }"
+              :disabled="isLoading || isTransitioning"
+            >
+              <span class="choice-number">{{ String.fromCharCode(65 + index) }}</span>
+              <span class="choice-text">{{ choice.text }}</span>
+              <span class="choice-arrow">→</span>
+            </button>
+          </div>
+        </Transition>
 
         <!-- 繼續按鈕（無選擇的過場） -->
         <div 
@@ -192,7 +279,7 @@ onMounted(() => {
             class="continue-btn"
             :disabled="isTransitioning"
           >
-            繼續
+            {{ isTyping ? '點擊跳過' : '繼續' }}
           </button>
         </div>
       </div>
@@ -447,6 +534,8 @@ onMounted(() => {
 .narrative-section {
   margin-bottom: var(--spacing-lg);
   animation: fadeInUp 0.5s ease 0.1s both;
+  cursor: pointer;
+  position: relative;
 }
 
 .narrative-card {
@@ -462,6 +551,49 @@ onMounted(() => {
   line-height: 1.8;
   color: var(--color-text-primary);
   white-space: pre-line;
+}
+
+/* 打字機游標 */
+.typing-cursor {
+  display: inline-block;
+  color: var(--color-primary);
+  font-weight: bold;
+  animation: cursorBlink 0.8s infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* 跳過按鈕 */
+.skip-btn {
+  display: block;
+  margin: var(--spacing-sm) auto 0;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: rgba(139, 115, 85, 0.1);
+  border: 1px solid rgba(139, 115, 85, 0.2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.skip-btn:hover {
+  background: rgba(139, 115, 85, 0.2);
+  color: var(--color-text-primary);
+}
+
+/* fade 過渡動畫 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* 反饋區塊 */
@@ -506,12 +638,31 @@ onMounted(() => {
 .choices-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  animation: fadeInUp 0.5s ease 0.2s both;
+  gap: var(--spacing-md);
+}
+
+.choices-hint {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+  animation: fadeIn 0.4s ease;
+}
+
+/* 選擇過渡動畫 */
+.choices-enter-active {
+  animation: fadeInUp 0.4s ease;
+}
+
+.choices-leave-active {
+  animation: fadeOut 0.2s ease;
 }
 
 .choice-btn {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
   text-align: left;
   padding: var(--spacing-md) var(--spacing-lg);
   background: white;
@@ -522,17 +673,74 @@ onMounted(() => {
   cursor: pointer;
   transition: all var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
-  min-height: 56px;
+  min-height: 60px;
+  animation: choiceSlideIn 0.4s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes choiceSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 選項序號 */
+.choice-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-bg-secondary));
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.choice-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* 選項箭頭 */
+.choice-arrow {
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all var(--transition-fast);
 }
 
 .choice-btn:hover:not(:disabled) {
   border-color: var(--color-primary);
-  background: #FDF8F3;
-  transform: translateX(4px);
+  background: linear-gradient(135deg, #FDF8F3, #FAF0E6);
+  transform: translateX(6px);
+  box-shadow: 0 4px 15px rgba(224, 123, 84, 0.15);
+}
+
+.choice-btn:hover:not(:disabled) .choice-number {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  transform: scale(1.1);
+}
+
+.choice-btn:hover:not(:disabled) .choice-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--color-primary);
 }
 
 .choice-btn:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateX(6px) scale(0.98);
 }
 
 .choice-btn.selected {
@@ -540,14 +748,29 @@ onMounted(() => {
   background: linear-gradient(135deg, #FDF8F3, #F5EDE4);
 }
 
+.choice-btn.selected .choice-number {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+}
+
+/* 選中後的脈衝效果 */
+.choice-btn.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color-primary), transparent);
+  opacity: 0;
+  animation: selectPulse 0.6s ease;
+}
+
+@keyframes selectPulse {
+  0% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
 .choice-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.choice-text {
-  display: block;
-  line-height: 1.5;
 }
 
 /* 繼續按鈕 */
