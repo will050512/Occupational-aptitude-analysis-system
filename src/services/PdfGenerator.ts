@@ -582,13 +582,13 @@ export class PdfGenerator {
       normalizedScores[key] = total > 0 ? Math.round((data.riasecScores[key] || 0) / total * 100) : 17
     }
 
-    // 生成六邊形雷達圖的 SVG - 調整尺寸以容納所有標籤
-    const svgWidth = 500
-    const svgHeight = 420
-    const centerX = svgWidth / 2  // 250
-    const centerY = svgHeight / 2  // 210
-    const maxRadius = 130
-    const labelOffset = 55  // 標籤距離頂點的距離
+    // 生成六邊形雷達圖的 SVG - 增大尺寸以完整容納所有標籤
+    const svgWidth = 600
+    const svgHeight = 480
+    const centerX = svgWidth / 2  // 300
+    const centerY = svgHeight / 2  // 240
+    const maxRadius = 140
+    const labelOffset = 50  // 標籤距離頂點的距離
     const points = ['R', 'I', 'A', 'S', 'E', 'C']
     
     // 計算六邊形各頂點 - 從正上方開始，順時針排列
@@ -624,23 +624,41 @@ export class PdfGenerator {
     })
 
     // 生成標籤 - 根據位置調整對齊方式
+    // index: 0=上(R), 1=右上(I), 2=右下(A), 3=下(S), 4=左下(E), 5=左上(C)
     const labels = points.map((key, i) => {
       const p = getPoint(i, maxRadius + labelOffset)
       const info = riasecInfo[key]!
       
-      // 根據角度調整文字對齊
+      // 根據位置調整文字對齊和偏移
       let textAnchor = 'middle'
-      let xOffset = 0
-      if (i === 1) { textAnchor = 'start'; xOffset = -10 }  // 右上
-      if (i === 2) { textAnchor = 'start'; xOffset = -10 }  // 右下
-      if (i === 4) { textAnchor = 'end'; xOffset = 10 }    // 左下
-      if (i === 5) { textAnchor = 'end'; xOffset = 10 }    // 左上
+      let xAdj = 0
+      let yAdj = 0
+      
+      if (i === 0) { // 上方 (R)
+        textAnchor = 'middle'
+        yAdj = -5
+      } else if (i === 1) { // 右上 (I)
+        textAnchor = 'start'
+        xAdj = 5
+      } else if (i === 2) { // 右下 (A)
+        textAnchor = 'start'
+        xAdj = 5
+      } else if (i === 3) { // 下方 (S)
+        textAnchor = 'middle'
+        yAdj = 5
+      } else if (i === 4) { // 左下 (E)
+        textAnchor = 'end'
+        xAdj = -5
+      } else if (i === 5) { // 左上 (C)
+        textAnchor = 'end'
+        xAdj = -5
+      }
       
       return `
-        <text x="${(p.x + xOffset).toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="${textAnchor}" dominant-baseline="middle" font-size="16" font-weight="bold" fill="${info.color}" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
+        <text x="${(p.x + xAdj).toFixed(1)}" y="${(p.y + yAdj).toFixed(1)}" text-anchor="${textAnchor}" dominant-baseline="middle" font-size="18" font-weight="bold" fill="${info.color}" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
           ${info.icon} ${info.name}
         </text>
-        <text x="${(p.x + xOffset).toFixed(1)}" y="${(p.y + 20).toFixed(1)}" text-anchor="${textAnchor}" font-size="15" font-weight="bold" fill="#333" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
+        <text x="${(p.x + xAdj).toFixed(1)}" y="${(p.y + yAdj + 22).toFixed(1)}" text-anchor="${textAnchor}" font-size="17" font-weight="bold" fill="#333" font-family="Microsoft JhengHei, PingFang TC, sans-serif">
           ${normalizedScores[key]}%
         </text>
       `
@@ -650,7 +668,7 @@ export class PdfGenerator {
     const dataDots = points.map((key, i) => {
       const value = normalizedScores[key] || 0
       const p = getPoint(i, (value / 100) * maxRadius)
-      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="2.5"/>`
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="3"/>`
     }).join('')
 
     // RIASEC 詳細說明卡片
@@ -658,14 +676,14 @@ export class PdfGenerator {
       const info = riasecInfo[key]!
       const score = normalizedScores[key] || 0
       return `
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: white; border-radius: 8px; border-left: 4px solid ${info.color}; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
-          <span style="font-size: 20px;">${info.icon}</span>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 8px; border-left: 4px solid ${info.color}; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+          <span style="font-size: 22px;">${info.icon}</span>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: bold; color: ${info.color}; font-size: 13px;">${info.name}</span>
-              <span style="font-weight: bold; color: ${info.color}; font-size: 14px;">${score}%</span>
+              <span style="font-weight: bold; color: ${info.color}; font-size: 14px;">${info.name}</span>
+              <span style="font-weight: bold; color: ${info.color}; font-size: 15px;">${score}%</span>
             </div>
-            <p style="margin: 2px 0 0 0; font-size: 11px; color: #666;">${info.desc}</p>
+            <p style="margin: 3px 0 0 0; font-size: 12px; color: #666;">${info.desc}</p>
           </div>
         </div>
       `
@@ -674,20 +692,20 @@ export class PdfGenerator {
     return `
       <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
         <!-- 頁面標題 -->
-        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 20px;">
-          <h2 style="font-size: 26px; color: #5D4E37; margin: 0; font-weight: bold;">🎯 RIASEC 職業興趣分析</h2>
-          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 14px;">探索您的職業興趣傾向，找到適合的職業方向</p>
+        <div style="border-bottom: 2px solid #C17F59; padding-bottom: 12px; margin-bottom: 18px;">
+          <h2 style="font-size: 28px; color: #5D4E37; margin: 0; font-weight: bold;">🎯 RIASEC 職業興趣分析</h2>
+          <p style="color: #8B7355; margin: 8px 0 0 0; font-size: 15px;">探索您的職業興趣傾向，找到適合的職業方向</p>
         </div>
 
         <!-- 雷達圖 - 置中顯示 -->
-        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 16px; padding: 15px; margin-bottom: 18px; border: 1px solid #E8E8E8;">
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 16px; padding: 10px; margin-bottom: 16px; border: 1px solid #E8E8E8; text-align: center;">
           <svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="display: block; margin: 0 auto;">
             <!-- 網格 -->
             ${gridLines}
             <!-- 軸線 -->
             ${axisLines}
             <!-- 數據區域 -->
-            <polygon points="${dataPoints.join(' ')}" fill="rgba(99, 102, 241, 0.35)" stroke="rgba(99, 102, 241, 0.9)" stroke-width="3"/>
+            <polygon points="${dataPoints.join(' ')}" fill="rgba(99, 102, 241, 0.4)" stroke="rgba(99, 102, 241, 1)" stroke-width="3"/>
             <!-- 數據點 -->
             ${dataDots}
             <!-- 標籤 -->
@@ -696,14 +714,14 @@ export class PdfGenerator {
         </div>
 
         <!-- RIASEC 說明卡片 -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
           ${riasecCards}
         </div>
 
         <!-- 說明文字 -->
         <div style="padding: 16px; background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; border: 1px solid rgba(33, 150, 243, 0.2);">
-          <h3 style="font-size: 14px; color: #1565C0; margin: 0 0 8px 0; font-weight: bold;">💡 如何解讀 RIASEC 結果</h3>
-          <p style="color: #424242; font-size: 12px; margin: 0; line-height: 1.7;">
+          <h3 style="font-size: 15px; color: #1565C0; margin: 0 0 8px 0; font-weight: bold;">💡 如何解讀 RIASEC 結果</h3>
+          <p style="color: #424242; font-size: 13px; margin: 0; line-height: 1.7;">
             RIASEC 模型由心理學家 John Holland 提出，將職業興趣分為六種類型。您的分數越高的類型，代表您對該類型工作活動的興趣越強。
             建議關注您得分最高的 2-3 種類型，尋找結合這些興趣的職業方向。
           </p>

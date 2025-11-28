@@ -170,9 +170,18 @@ async function shareResult() {
   }
 }
 
+// 檢查是否可以下載 PDF（必須先保存結果）
+const canDownloadPdf = computed(() => submitSuccess.value)
+
 // 下載 PDF 報告
 async function downloadPdf() {
   if (!personalityType.value || !analysisResult.value || isGeneratingPdf.value) return
+  
+  // 必須先保存結果才能下載
+  if (!submitSuccess.value) {
+    showToast('請先填寫暱稱並保存結果')
+    return
+  }
   
   isGeneratingPdf.value = true
   pdfError.value = ''
@@ -412,24 +421,27 @@ onMounted(() => {
         <!-- 暱稱輸入與提交 -->
         <section v-if="!submitSuccess" class="result-card">
           <h2 class="card-title">📝 保存你的結果</h2>
+          <p class="card-hint">⚠️ 必須保存結果後才能下載 PDF 報告</p>
           <div class="submit-form">
             <div class="input-group">
-              <label class="input-label">你的暱稱（選填）</label>
+              <label class="input-label">你的暱稱 <span class="required">*必填</span></label>
               <input 
                 v-model="nickname"
                 type="text"
-                placeholder="輸入一個暱稱..."
+                placeholder="請輸入暱稱（如：小明）"
                 class="nickname-input"
+                :class="{ 'input-error': submitError && !nickname.trim() }"
               />
             </div>
             <button
               @click="submitData"
-              :disabled="isSubmitting"
+              :disabled="isSubmitting || !nickname.trim()"
               class="submit-btn"
             >
               {{ isSubmitting ? '提交中...' : '保存並提交結果' }}
             </button>
             <p v-if="submitError" class="error-text">{{ submitError }}</p>
+            <p v-if="!nickname.trim()" class="hint-text">請輸入暱稱以保存結果</p>
           </div>
         </section>
 
@@ -445,10 +457,14 @@ onMounted(() => {
           <div class="pdf-section">
             <button 
               @click="downloadPdf" 
-              :disabled="isGeneratingPdf || pdfRetryCount >= maxPdfRetries"
+              :disabled="isGeneratingPdf || pdfRetryCount >= maxPdfRetries || !canDownloadPdf"
               class="action-btn btn-pdf"
+              :class="{ 'btn-disabled-hint': !canDownloadPdf }"
             >
-              <template v-if="isGeneratingPdf">
+              <template v-if="!canDownloadPdf">
+                🔒 請先保存結果
+              </template>
+              <template v-else-if="isGeneratingPdf">
                 ⏳ {{ pdfProgress || '生成中...' }}
               </template>
               <template v-else-if="pdfRetryCount >= maxPdfRetries">
@@ -886,6 +902,12 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
+.input-label .required {
+  color: #E53935;
+  font-size: var(--text-xs);
+  margin-left: var(--spacing-xs);
+}
+
 .nickname-input {
   width: 100%;
   padding: var(--spacing-md);
@@ -898,6 +920,26 @@ onMounted(() => {
 .nickname-input:focus {
   outline: none;
   border-color: var(--color-primary);
+}
+
+.nickname-input.input-error {
+  border-color: #E53935;
+}
+
+.card-hint {
+  font-size: var(--text-sm);
+  color: #FF9800;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: #FFF8E1;
+  border-radius: var(--radius-md);
+  border-left: 3px solid #FF9800;
+}
+
+.hint-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 .submit-btn {
@@ -991,6 +1033,10 @@ onMounted(() => {
 .btn-pdf:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.btn-pdf.btn-disabled-hint {
+  background: linear-gradient(135deg, #9CA3AF, #6B7280);
 }
 
 /* PDF 區塊 */

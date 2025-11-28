@@ -2,12 +2,19 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { StorageService, type GameResult } from '@/services/StorageService'
-import { getTypeById } from '@/data/personality-types'
+import { getTypeById, type PersonalityType } from '@/data/personality-types'
+import { getSceneByQuestionNumber } from '@/data/chapters'
+import { getRelatedTypes } from '@/data/type-relations'
+import { downloadPdfReport, type PdfReportData } from '@/services/PdfGenerator'
 
 const router = useRouter()
 
 // 歷史記錄
 const history = ref<GameResult[]>([])
+// 展開的記錄 ID
+const expandedRecordId = ref<string | null>(null)
+// PDF 下載中狀態
+const downloadingPdfId = ref<string | null>(null)
 
 // 載入歷史記錄
 onMounted(() => {
@@ -84,6 +91,83 @@ const hasRecords = computed(() => history.value.length > 0)
 
 // 發現的類型數
 const discoveredTypes = computed(() => new Set(history.value.map(h => h.personalityType)).size)
+
+// 切換展開/收合記錄
+function toggleRecord(recordId: string) {
+  expandedRecordId.value = expandedRecordId.value === recordId ? null : recordId
+}
+
+// 判斷記錄是否展開
+function isExpanded(recordId: string): boolean {
+  return expandedRecordId.value === recordId
+}
+
+// 獲取作答詳情 - 從 choices 對應到題目和選項
+function getChoiceDetails(record: GameResult) {
+  return record.choices.map(choice => {
+    const questionNum = parseInt(choice.questionId.replace(/\D/g, ''))
+    const scene = getSceneByQuestionNumber(questionNum)
+    const selectedChoice = scene?.choices[choice.choiceIndex]
+    return {
+      questionNumber: questionNum,
+      questionTitle: scene?.title || `問題 ${questionNum}`,
+      choiceText: selectedChoice?.text || choice.choiceValue,
+      choiceIndex: choice.choiceIndex
+    }
+  })
+}
+
+// 重新生成 PDF 報告
+async function downloadRecordPdf(record: GameResult) {
+  if (downloadingPdfId.value) return
+  
+  downloadingPdfId.value = record.id
+  
+  try {
+    const personalityType = getTypeById(record.personalityType)
+    if (!personalityType) {
+      alert('無法取得人格類型資訊')
+      return
+    }
+    
+    // 計算 RIASEC 百分比 (假設總分為100或從分數計算)
+    const riasecTotal = Object.values(record.scores.riasec).reduce((sum, v) => sum + v, 0) || 1
+    const riasecPercent: Record<string, number> = {}
+    for (const [key, value] of Object.entries(record.scores.riasec)) {
+      riasecPercent[key] = Math.round((value / riasecTotal) * 100)
+    }
+    
+    // 計算 DISC 百分比
+    const discTotal = Object.values(record.scores.disc).reduce((sum, v) => sum + v, 0) || 1
+    const discPercent: Record<string, number> = {}
+    for (const [key, value] of Object.entries(record.scores.disc)) {
+      discPercent[key] = Math.round((value / discTotal) * 100)
+    }
+    
+    // 獲取相關類型
+    const relatedTypeIds = getRelatedTypes(record.personalityType)
+    const relatedTypes = relatedTypeIds
+      .map(id => getTypeById(id))
+      .filter((t): t is PersonalityType => t !== undefined)
+    
+    const pdfData: PdfReportData = {
+      nickname: record.nickname || '匿名',
+      personalityType,
+      discScores: record.scores.disc,
+      discPercent,
+      riasecScores: riasecPercent,
+      relatedTypes,
+      completedAt: record.completedAt
+    }
+    
+    await downloadPdfReport(pdfData)
+  } catch (error) {
+    console.error('PDF 生成失敗:', error)
+    alert('PDF 生成失敗，請稍後再試')
+  } finally {
+    downloadingPdfId.value = null
+  }
+}
 </script>
 
 <template>
@@ -138,8 +222,9 @@ const discoveredTypes = computed(() => new Set(history.value.map(h => h.personal
           <div class="history-list">
             <div 
               v-for="(record, index) in history"
-              :key="index"
+              :key="record.id || index"
               class="record-card"
+              :class="{ 'is-expanded': isExpanded(record.id) }"
             >
               <!-- 類型標識條 -->
               <div 
@@ -148,7 +233,7 @@ const discoveredTypes = computed(() => new Set(history.value.map(h => h.personal
               ></div>
               
               <div class="record-content">
-                <div class="record-header">
+                <div class="record-header" @click="toggleRecord(record.id)">
                   <div class="record-type">
                     <span class="record-icon">{{ getTypeIcon(record.personalityType) }}</span>
                     <div class="record-type-info">
@@ -160,6 +245,7 @@ const discoveredTypes = computed(() => new Set(history.value.map(h => h.personal
                   <div class="record-meta">
                     <p class="record-date">{{ formatDate(record.completedAt) }}</p>
                     <p class="record-nickname">{{ record.nickname || '匿名' }}</p>
+                    <span class="expand-icon">{{ isExpanded(record.id) ? '▲' : '▼' }}</span>
                   </div>
                 </div>
 
@@ -172,6 +258,37 @@ const discoveredTypes = computed(() => new Set(history.value.map(h => h.personal
                     :class="`disc-${key}`"
                   >
                     {{ key }}: {{ score }}
+                  </div>
+                </div>
+
+                <!-- 展開區域：作答詳情與PDF下載 -->
+                <div v-if="isExpanded(record.id)" class="record-expanded">
+                  <!-- 作答記錄 -->
+                  <div class="choices-section">
+                    <h4 class="choices-title">📝 作答紀錄</h4>
+                    <div class="choices-list">
+                      <div 
+                        v-for="(detail, idx) in getChoiceDetails(record)" 
+                        :key="idx"
+                        class="choice-item"
+                      >
+                        <span class="choice-q">Q{{ detail.questionNumber }}</span>
+                        <span class="choice-title">{{ detail.questionTitle }}</span>
+                        <span class="choice-answer">{{ detail.choiceText }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- PDF 下載按鈕 -->
+                  <div class="record-actions">
+                    <button 
+                      class="btn-download-pdf"
+                      @click.stop="downloadRecordPdf(record)"
+                      :disabled="downloadingPdfId === record.id"
+                    >
+                      <span v-if="downloadingPdfId === record.id">⏳ 生成中...</span>
+                      <span v-else>📄 下載 PDF 報告</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -434,6 +551,145 @@ const discoveredTypes = computed(() => new Set(history.value.map(h => h.personal
 .disc-I { background: #FFF8E1; color: #F9A825; }
 .disc-S { background: #E8F5E9; color: #2E7D32; }
 .disc-C { background: #E3F2FD; color: #1565C0; }
+
+/* Record Card Expanded State */
+.record-card.is-expanded {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.record-header {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs);
+  margin: calc(var(--spacing-xs) * -1);
+}
+
+.record-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.expand-icon {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  margin-left: var(--spacing-sm);
+  transition: transform var(--transition-fast);
+}
+
+/* Expanded Content */
+.record-expanded {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px dashed var(--color-bg-tertiary);
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Choices Section */
+.choices-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.choices-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+.choice-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.choice-q {
+  grid-row: span 2;
+  font-weight: 700;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice-title {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.choice-answer {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Record Actions */
+.record-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+.btn-download-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(135deg, #5C6BC0, #3949AB);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-download-pdf:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(92, 107, 192, 0.4);
+}
+
+.btn-download-pdf:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-download-pdf:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 /* Empty State */
 .empty-state {
