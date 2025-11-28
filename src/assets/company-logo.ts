@@ -4,7 +4,7 @@
  */
 
 // Logo 圖片路徑
-import logoImage from '@/logo/愛放學CIS-15(長).png'
+import logoImage from '@/logo/company-logo.png'
 
 export const companyLogo = logoImage
 

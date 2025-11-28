@@ -436,7 +436,7 @@ onMounted(() => {
         <!-- 公司品牌資訊 -->
         <footer class="result-footer">
           <div class="company-branding">
-            <img src="@/logo/愛放學CIS-15(長).png" alt="萬里遊科技" class="company-logo" />
+            <img src="@/logo/company-logo.png" alt="萬里遊科技" class="company-logo" />
           </div>
           <p class="company-info">萬里遊科技股份有限公司 © 2025</p>
           <p class="powered-by">Powered by 新語市職涯探索</p>

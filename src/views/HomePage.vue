@@ -83,7 +83,7 @@
       <!-- 版本資訊 -->
       <footer class="app-footer">
         <div class="company-branding">
-          <img src="@/logo/愛放學CIS-15(長).png" alt="萬里遊科技" class="company-logo" />
+          <img src="@/logo/company-logo.png" alt="萬里遊科技" class="company-logo" />
         </div>
         <p class="company-info">萬里遊科技股份有限公司 © 2025</p>
         <p class="app-version">新語市職涯探索 v1.0</p>
