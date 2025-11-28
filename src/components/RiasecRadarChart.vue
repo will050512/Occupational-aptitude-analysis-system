@@ -79,7 +79,7 @@ const debouncedUpdateCssVars = debounce(updateCssVars, 300)
 // ResizeObserver
 let resizeObserver: ResizeObserver | null = null
 
-// 計算正規化的分數（百分比）
+// 計算正規化的分數（百分比）- 擴大差異以增強視覺效果
 const normalizedScores = computed(() => {
   const total = Object.values(props.scores).reduce((sum, val) => sum + val, 0)
   if (total === 0) return { R: 16.67, I: 16.67, A: 16.67, S: 16.67, E: 16.67, C: 16.67 }
@@ -91,7 +91,30 @@ const normalizedScores = computed(() => {
   return normalized
 })
 
-// Chart.js 資料
+// 計算顯示用的分數（擴大差異）
+const displayScores = computed(() => {
+  const scores = normalizedScores.value
+  const values = Object.values(scores)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min
+  
+  // 如果差異太小，擴大差異以增強視覺效果
+  // 使用 30-90 的範圍來顯示，讓差異更明顯
+  const display: Record<string, number> = {}
+  for (const key of riasecHexagonOrder) {
+    const score = scores[key] ?? 0
+    if (range > 0) {
+      // 將原始值映射到 30-90 的範圍
+      display[key] = 30 + ((score - min) / range) * 60
+    } else {
+      display[key] = 50 // 如果所有值相同，顯示在中間
+    }
+  }
+  return display
+})
+
+// Chart.js 資料 - 使用擴大差異後的分數
 const chartData = computed<ChartData<'radar'>>(() => ({
   labels: riasecHexagonOrder.map(code => {
     const type = riasecTypes[code]
@@ -100,7 +123,7 @@ const chartData = computed<ChartData<'radar'>>(() => ({
   datasets: [
     {
       label: '職業興趣分布',
-      data: riasecHexagonOrder.map(code => normalizedScores.value[code] || 0),
+      data: riasecHexagonOrder.map(code => displayScores.value[code] || 0),
       backgroundColor: 'rgba(99, 102, 241, 0.35)',
       borderColor: 'rgba(99, 102, 241, 0.9)',
       borderWidth: 3,
@@ -140,7 +163,7 @@ const chartOptions = computed<ChartOptions<'radar'>>(() => ({
       min: 0,
       ticks: {
         stepSize: 20,
-        display: true,
+        display: false,  // 隱藏刻度，因為我們使用擴大差異的顯示分數
         backdropColor: 'transparent',
         color: '#6B7280',
         font: {
@@ -163,7 +186,13 @@ const chartOptions = computed<ChartOptions<'radar'>>(() => ({
           size: radarLabelSize.value,
           weight: 'bold' as const
         },
-        padding: 18
+        padding: 18,
+        // 在標籤中顯示實際百分比
+        callback: function(value: string, index: number) {
+          const code = riasecHexagonOrder[index]
+          const percent = code ? normalizedScores.value[code] : 0
+          return `${value}\n${percent}%`
+        }
       }
     }
   },
