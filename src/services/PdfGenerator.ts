@@ -22,6 +22,9 @@ export interface PdfReportData {
   confidence?: number
   uniqueTags?: string[]
   personalSummary?: string
+  // 新增：Big Five 和 Career Anchors 數據
+  bigFiveScores?: Record<string, number>
+  careerAnchorScores?: Record<string, number>
 }
 
 export interface PdfGeneratorOptions {
@@ -222,7 +225,7 @@ export class PdfGenerator {
    */
   async generateReport(data: PdfReportData, options?: PdfGeneratorOptions): Promise<void> {
     const { onProgress } = options || {}
-    const totalPages = 7  // 增加一頁個人特質摘要
+    const totalPages = 9  // 增加 Big Five 和 Career Anchors 頁面
     
     // 預先載入 Logo
     onProgress?.('正在準備資源...', 0, totalPages)
@@ -286,8 +289,18 @@ export class PdfGenerator {
       container.innerHTML = this.renderCareersPage(data)
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
-      // 第七頁：理論基礎
-      onProgress?.('正在生成理論基礎...', 7, totalPages)
+      // 第七頁：Big Five 人格特質
+      onProgress?.('正在生成 Big Five 分析...', 7, totalPages)
+      container.innerHTML = this.renderBigFivePage(data)
+      await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
+
+      // 第八頁：職業錨定分析
+      onProgress?.('正在生成職業錨定分析...', 8, totalPages)
+      container.innerHTML = this.renderCareerAnchorsPage(data)
+      await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
+
+      // 第九頁：理論基礎
+      onProgress?.('正在生成理論基礎...', 9, totalPages)
       container.innerHTML = this.renderTheoryPage()
       await this.addPageToPdf(pdf, container, pdfWidth, pdfHeight, true)
 
@@ -706,6 +719,164 @@ export class PdfGenerator {
     `
   }
 
+  private renderBigFivePage(data: PdfReportData): string {
+    // Big Five 類型定義
+    const bigFiveInfo: Record<string, { name: string; icon: string; color: string; highDesc: string; lowDesc: string }> = {
+      O: { name: '開放性', icon: '🎨', color: '#9C27B0', highDesc: '富有想像力、好奇心強，喜歡嘗試新事物', lowDesc: '務實、傳統，偏好熟悉的方式' },
+      C: { name: '盡責性', icon: '📋', color: '#4CAF50', highDesc: '做事有條理、自律性強，善於規劃', lowDesc: '較為隨性、靈活，不喜歡太多規則' },
+      E: { name: '外向性', icon: '🎉', color: '#FF9800', highDesc: '充滿活力、善於社交，在人群中如魚得水', lowDesc: '偏好安靜、獨處，在小範圍互動中更自在' },
+      A: { name: '親和性', icon: '🤝', color: '#2196F3', highDesc: '善於合作、富有同理心，重視和諧', lowDesc: '較為獨立、競爭性強，直接表達意見' },
+      N: { name: '情緒穩定性', icon: '🧘', color: '#607D8B', highDesc: '對壓力較敏感，情緒體驗豐富', lowDesc: '情緒穩定、冷靜，在壓力下保持平常心' }
+    }
+
+    // 獲取 Big Five 分數或使用預設值
+    const scores = data.bigFiveScores || { O: 50, C: 50, E: 50, A: 50, N: 50 }
+    
+    // 生成條形圖
+    const bigFiveBars = (['O', 'C', 'E', 'A', 'N'] as const).map(key => {
+      const info = bigFiveInfo[key]!
+      const score = scores[key] || 50
+      const isHigh = score > 55
+      const desc = isHigh ? info.highDesc : info.lowDesc
+      
+      return `
+        <div style="margin-bottom: 14px; padding: 12px; background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 10px; border-left: 4px solid ${info.color};">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">${info.icon}</span>
+              <div>
+                <span style="font-weight: bold; color: #5D4E37; font-size: 14px;">${info.name}</span>
+                <span style="color: #8B7355; font-size: 11px; margin-left: 6px;">(${key === 'O' ? 'Openness' : key === 'C' ? 'Conscientiousness' : key === 'E' ? 'Extraversion' : key === 'A' ? 'Agreeableness' : 'Neuroticism'})</span>
+              </div>
+            </div>
+            <span style="font-weight: bold; color: ${info.color}; font-size: 18px;">${score}%</span>
+          </div>
+          <div style="background: #E8E8E8; border-radius: 8px; height: 12px; overflow: hidden; margin-bottom: 8px;">
+            <div style="background: linear-gradient(90deg, ${info.color}, ${info.color}CC); height: 100%; width: ${score}%; border-radius: 8px;"></div>
+          </div>
+          <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.5;">${desc}</p>
+        </div>
+      `
+    }).join('')
+
+    return `
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
+        <!-- 頁面標題 -->
+        <div style="border-bottom: 2px solid #9C27B0; padding-bottom: 12px; margin-bottom: 18px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">🧠 Big Five 五大人格特質</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">基於 Costa & McCrae (1992) 五大人格模型的分析結果</p>
+        </div>
+
+        <!-- Big Five 條形圖 -->
+        <div style="margin-bottom: 16px;">
+          ${bigFiveBars}
+        </div>
+
+        <!-- 說明卡片 -->
+        <div style="background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%); border-radius: 12px; padding: 16px; border: 1px solid rgba(156, 39, 176, 0.2);">
+          <h3 style="font-size: 14px; color: #7B1FA2; margin: 0 0 10px 0; font-weight: bold;">💡 如何解讀 Big Five 結果</h3>
+          <p style="color: #424242; font-size: 12px; margin: 0; line-height: 1.7;">
+            Big Five（五大人格模型）是心理學界最被廣泛認可的人格理論之一。每個維度的分數反映你在該特質上的傾向程度。
+            沒有「好」或「壞」的分數，每種傾向都有其優勢和適合的工作環境。了解自己的人格特質有助於選擇適合的職業和工作方式。
+          </p>
+        </div>
+
+        <!-- 頁碼 -->
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 7 -</span>
+        </div>
+      </div>
+    `
+  }
+
+  private renderCareerAnchorsPage(data: PdfReportData): string {
+    // Career Anchors 類型定義
+    const anchorInfo: Record<string, { name: string; icon: string; color: string; desc: string }> = {
+      TF: { name: '技術/功能型', icon: '🔧', color: '#607D8B', desc: '追求專業技能精進，成為領域專家' },
+      GM: { name: '管理型', icon: '👔', color: '#3F51B5', desc: '追求帶領團隊、做出重要決策' },
+      AU: { name: '自主型', icon: '🦅', color: '#009688', desc: '追求工作獨立性和彈性' },
+      SE: { name: '安全/穩定型', icon: '🏠', color: '#795548', desc: '追求工作穩定和長期保障' },
+      EC: { name: '創業型', icon: '🚀', color: '#FF5722', desc: '追求創建自己的事業' },
+      SV: { name: '服務型', icon: '💝', color: '#E91E63', desc: '追求幫助他人和社會貢獻' },
+      CH: { name: '挑戰型', icon: '⚔️', color: '#F44336', desc: '追求克服困難的成就感' },
+      LS: { name: '生活型', icon: '⚖️', color: '#4CAF50', desc: '追求工作與生活平衡' }
+    }
+
+    // 獲取 Career Anchors 分數或使用預設值
+    const scores = data.careerAnchorScores || { TF: 50, GM: 50, AU: 50, SE: 50, EC: 50, SV: 50, CH: 50, LS: 50 }
+    
+    // 排序找出前三高
+    const sortedAnchors = Object.entries(scores).sort((a, b) => b[1] - a[1])
+    const top3 = sortedAnchors.slice(0, 3)
+    
+    // 生成前三高卡片
+    const top3Cards = top3.map(([key, score], index) => {
+      const info = anchorInfo[key]!
+      const medals = ['🥇', '🥈', '🥉']
+      return `
+        <div style="flex: 1; padding: 14px; background: linear-gradient(135deg, ${info.color}10 0%, ${info.color}20 100%); border-radius: 12px; border: 2px solid ${info.color}40; text-align: center;">
+          <div style="font-size: 28px; margin-bottom: 6px;">${medals[index]} ${info.icon}</div>
+          <div style="font-size: 13px; font-weight: bold; color: ${info.color}; margin-bottom: 4px;">${info.name}</div>
+          <div style="font-size: 20px; font-weight: bold; color: #5D4E37;">${score}%</div>
+          <div style="font-size: 10px; color: #666; margin-top: 4px;">${info.desc}</div>
+        </div>
+      `
+    }).join('')
+
+    // 生成所有錨定的條形圖
+    const anchorBars = sortedAnchors.map(([key, score]) => {
+      const info = anchorInfo[key]!
+      return `
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+          <span style="font-size: 16px; width: 24px;">${info.icon}</span>
+          <span style="width: 80px; font-size: 11px; color: #5D4E37; font-weight: 500;">${info.name}</span>
+          <div style="flex: 1; height: 14px; background: #E8E8E8; border-radius: 7px; overflow: hidden;">
+            <div style="height: 100%; width: ${score}%; background: linear-gradient(90deg, ${info.color}, ${info.color}CC); border-radius: 7px;"></div>
+          </div>
+          <span style="width: 40px; text-align: right; font-size: 12px; font-weight: bold; color: ${info.color};">${score}%</span>
+        </div>
+      `
+    }).join('')
+
+    return `
+      <div style="width: 794px; height: 1123px; padding: 35px 45px; box-sizing: border-box; background: white; position: relative; overflow: hidden;">
+        <!-- 頁面標題 -->
+        <div style="border-bottom: 2px solid #FF5722; padding-bottom: 12px; margin-bottom: 18px;">
+          <h2 style="font-size: 24px; color: #5D4E37; margin: 0; font-weight: bold;">⚓ 職業錨定分析</h2>
+          <p style="color: #8B7355; margin: 6px 0 0 0; font-size: 13px;">基於 Edgar Schein (1978, 1990) 職業錨定理論的分析結果</p>
+        </div>
+
+        <!-- 前三高職業錨定 -->
+        <div style="margin-bottom: 18px;">
+          <h3 style="font-size: 14px; color: #5D4E37; margin: 0 0 12px 0; font-weight: bold;">🏆 您的前三大職涯驅動力</h3>
+          <div style="display: flex; gap: 12px;">
+            ${top3Cards}
+          </div>
+        </div>
+
+        <!-- 所有職業錨定分布 -->
+        <div style="background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid #E8E8E8;">
+          <h3 style="font-size: 13px; color: #5D4E37; margin: 0 0 12px 0; font-weight: bold;">📊 八大職業錨定分布</h3>
+          ${anchorBars}
+        </div>
+
+        <!-- 說明卡片 -->
+        <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 152, 0, 0.3);">
+          <h3 style="font-size: 14px; color: #E65100; margin: 0 0 10px 0; font-weight: bold;">💡 什麼是職業錨定？</h3>
+          <p style="color: #424242; font-size: 12px; margin: 0; line-height: 1.7;">
+            職業錨定是指影響你職涯選擇的核心價值觀和動機。它就像船錨一樣，在職涯的風浪中穩定你的方向。
+            了解你的職業錨定有助於做出符合內心價值的職涯決策，找到真正讓你滿足的工作。分數最高的類型代表你最核心的職涯驅動力。
+          </p>
+        </div>
+
+        <!-- 頁碼 -->
+        <div style="position: absolute; bottom: 25px; left: 0; right: 0; text-align: center;">
+          <span style="color: #8B7355; font-size: 11px;">- 8 -</span>
+        </div>
+      </div>
+    `
+  }
+
   private renderCareersPage(data: PdfReportData): string {
     const typeId = data.personalityType.id
     const careers = getCareers(typeId)
@@ -794,6 +965,23 @@ export class PdfGenerator {
       normalizedScores[key] = total > 0 ? Math.round((data.riasecScores[key] || 0) / total * 100) : 17
     }
 
+    // 【差異放大】計算顯示用分數，讓雷達圖視覺差異更明顯
+    const scoreValues = Object.values(normalizedScores)
+    const minScore = Math.min(...scoreValues)
+    const maxScore = Math.max(...scoreValues)
+    const range = maxScore - minScore
+    
+    const displayScores: Record<string, number> = {}
+    for (const key of Object.keys(riasecInfo)) {
+      const score = normalizedScores[key] || 0
+      if (range > 0) {
+        // 映射到 25-95 範圍，讓差異更明顯
+        displayScores[key] = 25 + ((score - minScore) / range) * 70
+      } else {
+        displayScores[key] = 60 // 如果所有分數相同，顯示在中間
+      }
+    }
+
     // 生成六邊形雷達圖的 SVG - 增大尺寸以完整容納所有標籤
     const svgWidth = 600
     const svgHeight = 480
@@ -828,9 +1016,9 @@ export class PdfGenerator {
       return `<line x1="${centerX}" y1="${centerY}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#D0D0D0" stroke-width="1.5"/>`
     }).join('')
 
-    // 生成數據多邊形的頂點
+    // 生成數據多邊形的頂點（使用差異放大的 displayScores）
     const dataPoints = points.map((key, i) => {
-      const value = normalizedScores[key] || 0
+      const value = displayScores[key] || 60
       const p = getPoint(i, (value / 100) * maxRadius)
       return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
     })
@@ -876,9 +1064,9 @@ export class PdfGenerator {
       `
     }).join('')
 
-    // 生成數據點
+    // 生成數據點（使用差異放大的 displayScores）
     const dataDots = points.map((key, i) => {
-      const value = normalizedScores[key] || 0
+      const value = displayScores[key] || 60
       const p = getPoint(i, (value / 100) * maxRadius)
       return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="8" fill="${riasecInfo[key]!.color}" stroke="white" stroke-width="3"/>`
     }).join('')
@@ -1035,7 +1223,7 @@ export class PdfGenerator {
           </div>
           <!-- 頁碼 -->
           <div style="text-align: center; margin-top: 8px;">
-            <span style="color: #8B7355; font-size: 11px;">- 7 -</span>
+            <span style="color: #8B7355; font-size: 11px;">- 9 -</span>
           </div>
         </div>
       </div>

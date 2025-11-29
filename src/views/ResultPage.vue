@@ -186,6 +186,64 @@ const riasecInfo: Record<string, { name: string; icon: string; desc: string }> =
   C: { name: '事務型', icon: '📋', desc: '偏好組織規劃與行政工作' }
 }
 
+// Big Five 類型定義
+interface BigFiveTrait {
+  id: 'O' | 'C' | 'E' | 'A' | 'N'
+  name: string
+  eng: string
+  icon: string
+  color: string
+  highDesc: string
+  lowDesc: string
+}
+
+const bigFiveTraits: BigFiveTrait[] = [
+  { id: 'O', name: '開放性', eng: 'Openness', icon: '🎨', color: '#9C27B0', highDesc: '你富有想像力、好奇心強，喜歡嘗試新事物和探索不同觀點。', lowDesc: '你務實、傳統，偏好熟悉的方式和具體的事物。' },
+  { id: 'C', name: '盡責性', eng: 'Conscientiousness', icon: '📋', color: '#4CAF50', highDesc: '你做事有條理、自律性強，善於規劃並完成目標。', lowDesc: '你較為隨性、靈活，不喜歡太多規則和結構。' },
+  { id: 'E', name: '外向性', eng: 'Extraversion', icon: '🎉', color: '#FF9800', highDesc: '你充滿活力、善於社交，在人群中如魚得水。', lowDesc: '你偏好安靜、獨處，在小範圍互動中更自在。' },
+  { id: 'A', name: '親和性', eng: 'Agreeableness', icon: '🤝', color: '#2196F3', highDesc: '你善於合作、富有同理心，重視和諧的人際關係。', lowDesc: '你較為獨立、競爭性強，會直接表達不同意見。' },
+  { id: 'N', name: '情緒穩定性', eng: 'Neuroticism', icon: '🧘', color: '#607D8B', highDesc: '你對壓力較敏感，情緒起伏較大，這代表你有豐富的情感體驗。', lowDesc: '你情緒穩定、冷靜，在壓力下也能保持平常心。' }
+]
+
+// Big Five 前兩高
+const bigFiveTop2 = computed(() => {
+  if (!analysisResult.value?.bigFiveScores) return []
+  const scores = analysisResult.value.bigFiveScores
+  return [...bigFiveTraits]
+    .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+    .slice(0, 2)
+})
+
+// Career Anchors 類型定義
+interface CareerAnchorType {
+  id: 'TF' | 'GM' | 'AU' | 'SE' | 'EC' | 'SV' | 'CH' | 'LS'
+  name: string
+  shortName: string
+  icon: string
+  color: string
+  desc: string
+}
+
+const allCareerAnchors: CareerAnchorType[] = [
+  { id: 'TF', name: '技術/功能型', shortName: '技術型', icon: '🔧', color: '#607D8B', desc: '追求專業技能精進，成為領域專家' },
+  { id: 'GM', name: '管理型', shortName: '管理型', icon: '👔', color: '#3F51B5', desc: '追求帶領團隊、做出重要決策' },
+  { id: 'AU', name: '自主型', shortName: '自主型', icon: '🦅', color: '#009688', desc: '追求工作獨立性和彈性' },
+  { id: 'SE', name: '安全/穩定型', shortName: '穩定型', icon: '🏠', color: '#795548', desc: '追求工作穩定和長期保障' },
+  { id: 'EC', name: '創業型', shortName: '創業型', icon: '🚀', color: '#FF5722', desc: '追求創建自己的事業' },
+  { id: 'SV', name: '服務型', shortName: '服務型', icon: '💝', color: '#E91E63', desc: '追求幫助他人和社會貢獻' },
+  { id: 'CH', name: '挑戰型', shortName: '挑戰型', icon: '⚔️', color: '#F44336', desc: '追求克服困難的成就感' },
+  { id: 'LS', name: '生活型', shortName: '生活型', icon: '⚖️', color: '#4CAF50', desc: '追求工作與生活平衡' }
+]
+
+// Career Anchors 前三高
+const careerAnchorTop3 = computed(() => {
+  if (!analysisResult.value?.careerAnchorScores) return []
+  const scores = analysisResult.value.careerAnchorScores
+  return [...allCareerAnchors]
+    .sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0))
+    .slice(0, 3)
+})
+
 // 提交數據到 Google Sheets
 async function submitData() {
   if (!analysisResult.value || isSubmitting.value) return
@@ -332,7 +390,25 @@ async function downloadPdf() {
       totalChoices: storyManager.allChoices.length,
       confidence: confidence.value,
       uniqueTags: uniqueTags.value,
-      personalSummary: personalSummary.value
+      personalSummary: personalSummary.value,
+      // 新增 Big Five 和 Career Anchors 數據（轉換為 Record<string, number>）
+      bigFiveScores: analysisResult.value.bigFiveScores ? {
+        O: analysisResult.value.bigFiveScores.O,
+        C: analysisResult.value.bigFiveScores.C,
+        E: analysisResult.value.bigFiveScores.E,
+        A: analysisResult.value.bigFiveScores.A,
+        N: analysisResult.value.bigFiveScores.N
+      } : undefined,
+      careerAnchorScores: analysisResult.value.careerAnchorScores ? {
+        TF: analysisResult.value.careerAnchorScores.TF,
+        GM: analysisResult.value.careerAnchorScores.GM,
+        AU: analysisResult.value.careerAnchorScores.AU,
+        SE: analysisResult.value.careerAnchorScores.SE,
+        EC: analysisResult.value.careerAnchorScores.EC,
+        SV: analysisResult.value.careerAnchorScores.SV,
+        CH: analysisResult.value.careerAnchorScores.CH,
+        LS: analysisResult.value.careerAnchorScores.LS
+      } : undefined
     }, {
       onProgress: (step, current, total) => {
         pdfProgress.value = `${step} (${current}/${total})`
@@ -666,6 +742,99 @@ onMounted(() => {
             <div class="tip-item">
               <span class="tip-icon">🎯</span>
               <span class="tip-text">設定明確目標，定期檢視</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Big Five 五大人格特質 -->
+        <section v-if="analysisResult?.bigFiveScores" class="result-card card-bigfive">
+          <h2 class="card-title">
+            <span class="title-icon">🧠</span>
+            Big Five 五大人格特質
+          </h2>
+          <p class="card-subtitle-text">基於 Costa & McCrae (1992) 五大人格模型的分析結果</p>
+          
+          <div class="bigfive-bars">
+            <div v-for="trait in bigFiveTraits" :key="trait.id" class="bigfive-bar-item">
+              <div class="bigfive-bar-header">
+                <span class="bigfive-icon">{{ trait.icon }}</span>
+                <span class="bigfive-label">{{ trait.name }}</span>
+                <span class="bigfive-sublabel">({{ trait.eng }})</span>
+              </div>
+              <div class="bigfive-bar-track">
+                <div 
+                  class="bigfive-bar-fill"
+                  :style="{ width: `${analysisResult.bigFiveScores[trait.id]}%`, backgroundColor: trait.color }"
+                ></div>
+              </div>
+              <span class="bigfive-value" :style="{ color: trait.color }">
+                {{ analysisResult.bigFiveScores[trait.id] }}%
+              </span>
+            </div>
+          </div>
+          
+          <div class="bigfive-interpretation">
+            <div 
+              v-for="trait in bigFiveTop2" 
+              :key="trait.id" 
+              class="bigfive-insight"
+              :style="{ borderColor: trait.color }"
+            >
+              <span class="insight-icon">{{ trait.icon }}</span>
+              <div class="insight-content">
+                <span class="insight-title">{{ trait.name }} 傾向{{ analysisResult.bigFiveScores[trait.id] > 55 ? '較高' : '適中' }}</span>
+                <p class="insight-text">{{ analysisResult.bigFiveScores[trait.id] > 55 ? trait.highDesc : trait.lowDesc }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 職業錨定分析 -->
+        <section v-if="analysisResult?.careerAnchorScores" class="result-card card-anchors">
+          <h2 class="card-title">
+            <span class="title-icon">⚓</span>
+            職業錨定分析
+          </h2>
+          <p class="card-subtitle-text">基於 Edgar Schein (1978) 職業錨定理論的分析結果</p>
+          
+          <!-- 前三大職涯驅動力 -->
+          <div class="anchor-top3">
+            <h3 class="anchor-subtitle">🏆 你的前三大職涯驅動力</h3>
+            <div class="anchor-top3-list">
+              <div 
+                v-for="(anchor, index) in careerAnchorTop3" 
+                :key="anchor.id" 
+                class="anchor-top3-item"
+                :class="`rank-${index + 1}`"
+              >
+                <span class="anchor-rank">{{ ['🥇', '🥈', '🥉'][index] }}</span>
+                <span class="anchor-icon">{{ anchor.icon }}</span>
+                <div class="anchor-info">
+                  <span class="anchor-name">{{ anchor.name }}</span>
+                  <span class="anchor-desc">{{ anchor.desc }}</span>
+                </div>
+                <span class="anchor-score" :style="{ color: anchor.color }">
+                  {{ analysisResult.careerAnchorScores[anchor.id] }}%
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 所有錨定分布 -->
+          <div class="anchor-all">
+            <h3 class="anchor-subtitle">📊 八大職業錨定分布</h3>
+            <div class="anchor-bars">
+              <div v-for="anchor in allCareerAnchors" :key="anchor.id" class="anchor-bar-item">
+                <span class="anchor-bar-icon">{{ anchor.icon }}</span>
+                <span class="anchor-bar-label">{{ anchor.shortName }}</span>
+                <div class="anchor-bar-track">
+                  <div 
+                    class="anchor-bar-fill"
+                    :style="{ width: `${analysisResult.careerAnchorScores[anchor.id]}%`, backgroundColor: anchor.color }"
+                  ></div>
+                </div>
+                <span class="anchor-bar-value">{{ analysisResult.careerAnchorScores[anchor.id] }}%</span>
+              </div>
             </div>
           </div>
         </section>
@@ -2233,6 +2402,262 @@ onMounted(() => {
   
   .advice-tips {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== Big Five 卡片樣式 ==================== */
+.card-bigfive {
+  background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+  border: 1px solid #E8E8E8;
+}
+
+.bigfive-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.bigfive-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bigfive-bar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.bigfive-icon {
+  font-size: 1.2rem;
+}
+
+.bigfive-label {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+}
+
+.bigfive-sublabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.bigfive-bar-track {
+  height: 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.bigfive-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+}
+
+.bigfive-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: right;
+}
+
+.bigfive-interpretation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.bigfive-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid;
+}
+
+.insight-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.insight-content {
+  flex: 1;
+}
+
+.insight-title {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.insight-text {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==================== Career Anchors 卡片樣式 ==================== */
+.card-anchors {
+  background: linear-gradient(135deg, #FFF9F0 0%, #FFF3E0 100%);
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.anchor-subtitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.anchor-top3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+.anchor-top3-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.anchor-top3-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-lg);
+  transition: transform 0.2s ease;
+}
+
+.anchor-top3-item:hover {
+  transform: translateX(4px);
+}
+
+.anchor-top3-item.rank-1 {
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+  border: 1px solid #FFD54F;
+}
+
+.anchor-top3-item.rank-2 {
+  background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%);
+  border: 1px solid #B0BEC5;
+}
+
+.anchor-top3-item.rank-3 {
+  background: linear-gradient(135deg, #FBE9E7 0%, #FFCCBC 100%);
+  border: 1px solid #FFAB91;
+}
+
+.anchor-rank {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.anchor-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.anchor-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.anchor-name {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.anchor-desc {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.anchor-score {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.anchor-all {
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-lg);
+}
+
+.anchor-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.anchor-bar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.anchor-bar-icon {
+  font-size: 1rem;
+  width: 24px;
+  text-align: center;
+}
+
+.anchor-bar-label {
+  width: 50px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.anchor-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.anchor-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+}
+
+.anchor-bar-value {
+  width: 40px;
+  text-align: right;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* 響應式 - Big Five & Anchors */
+@media (max-width: 480px) {
+  .anchor-top3-item {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .anchor-score {
+    width: 100%;
+    text-align: right;
   }
 }
 </style>

@@ -83,27 +83,120 @@ export const BRANCH_DECISION_QUESTION = 4
 
 /**
  * 根據 DISC 分數決定分支路線
+ * 採用「最大維度優先 + 次要維度加權」策略
+ * 
  * 規則：
- * - D + I >= S + C → entrepreneur（創業者）
- * - S 最高且 S >= D + I → teamwork（協作者）
- * - 其他情況 → specialist（研究者）
+ * 1. 計算各維度百分比分布
+ * 2. 找出最大維度（primary）和次要維度（secondary）
+ * 3. 判定規則：
+ *    - D 或 I 為最大維度，且超過均值（25%）一定比例 → entrepreneur（創業者）
+ *    - S 為最大維度，且超過均值一定比例 → teamwork（協作者）
+ *    - C 為最大維度，或分布較為均衡 → specialist（研究者）
+ * 4. 次要維度加權修正：
+ *    - D+I 組合強化創業者傾向
+ *    - S+I 或 S+C 組合強化協作者傾向
+ *    - C+I 或 C+S 組合強化研究者傾向
  */
 export function determineBranch(discScores: DISCScores): BranchType {
   const { D, I, S, C } = discScores
-  const diSum = D + I
-  const scSum = S + C
+  const total = D + I + S + C
   
-  // D + I 傾向高 → 創業者路線
-  if (diSum >= scSum && (D >= S || I >= S)) {
+  // 避免除以零
+  if (total === 0) {
+    return 'specialist' // 預設返回研究者路線
+  }
+  
+  // 計算百分比
+  const percentD = (D / total) * 100
+  const percentI = (I / total) * 100
+  const percentS = (S / total) * 100
+  const percentC = (C / total) * 100
+  
+  // 均值為 25%，計算與均值的偏差
+  const baseline = 25
+  const deviationD = percentD - baseline
+  const deviationI = percentI - baseline
+  const deviationS = percentS - baseline
+  const deviationC = percentC - baseline
+  
+  // 找出最大維度和次要維度
+  const scores = [
+    { key: 'D' as const, value: D, percent: percentD, deviation: deviationD },
+    { key: 'I' as const, value: I, percent: percentI, deviation: deviationI },
+    { key: 'S' as const, value: S, percent: percentS, deviation: deviationS },
+    { key: 'C' as const, value: C, percent: percentC, deviation: deviationC }
+  ]
+  
+  scores.sort((a, b) => b.value - a.value)
+  const primary = scores[0]!
+  const secondary = scores[1]!
+  
+  // 計算分數的標準差來判斷是否分布均衡
+  const mean = total / 4
+  const variance = ((D - mean) ** 2 + (I - mean) ** 2 + (S - mean) ** 2 + (C - mean) ** 2) / 4
+  const stdDev = Math.sqrt(variance)
+  const isBalanced = stdDev < (mean * 0.3) // 標準差小於均值的 30% 視為均衡
+  
+  // 計算複合分數（用於邊界情況的判定）
+  const entrepreneurScore = deviationD + deviationI + (primary.key === 'D' || primary.key === 'I' ? 5 : 0)
+  const teamworkScore = deviationS + (deviationI * 0.3) + (primary.key === 'S' ? 5 : 0)
+  const specialistScore = deviationC + (deviationI * 0.2) + (deviationS * 0.2) + (primary.key === 'C' ? 5 : 0)
+  
+  // 主要判定邏輯
+  
+  // 1. D 或 I 為最大維度，且偏差 > 3%，傾向創業者
+  if ((primary.key === 'D' || primary.key === 'I') && primary.deviation > 3) {
+    // 次要維度加權：如果次要也是 D 或 I，強化創業者傾向
+    if (secondary.key === 'D' || secondary.key === 'I') {
+      return 'entrepreneur'
+    }
+    // 如果次要是 S 且 S 偏差也很高，可能轉向協作者
+    if (secondary.key === 'S' && secondary.deviation > 5) {
+      return entrepreneurScore > teamworkScore ? 'entrepreneur' : 'teamwork'
+    }
+    // 如果次要是 C 且 C 偏差也很高，可能轉向研究者
+    if (secondary.key === 'C' && secondary.deviation > 5) {
+      return entrepreneurScore > specialistScore ? 'entrepreneur' : 'specialist'
+    }
     return 'entrepreneur'
   }
   
-  // S 傾向最高 → 協作者路線
-  if (S >= D && S >= I && S >= C) {
+  // 2. S 為最大維度，且偏差 > 2%，傾向協作者
+  if (primary.key === 'S' && primary.deviation > 2) {
+    // 次要維度加權
+    if (secondary.key === 'I' && secondary.deviation > 0) {
+      return 'teamwork' // S+I 組合強化協作者
+    }
+    if (secondary.key === 'C' && secondary.deviation > 3) {
+      // S+C 組合需要進一步判斷
+      return teamworkScore > specialistScore ? 'teamwork' : 'specialist'
+    }
+    if (secondary.key === 'D' && secondary.deviation > 5) {
+      // S+D 組合可能轉向創業者
+      return teamworkScore > entrepreneurScore ? 'teamwork' : 'entrepreneur'
+    }
     return 'teamwork'
   }
   
-  // 其他情況（C 傾向高或平均）→ 研究者路線
+  // 3. C 為最大維度，傾向研究者
+  if (primary.key === 'C' && primary.deviation > 0) {
+    return 'specialist'
+  }
+  
+  // 4. 分布均衡的情況，根據複合分數決定
+  if (isBalanced) {
+    const maxScore = Math.max(entrepreneurScore, teamworkScore, specialistScore)
+    if (maxScore === entrepreneurScore) return 'entrepreneur'
+    if (maxScore === teamworkScore) return 'teamwork'
+    return 'specialist'
+  }
+  
+  // 5. 邊界情況：使用複合分數決定
+  const maxScore = Math.max(entrepreneurScore, teamworkScore, specialistScore)
+  if (maxScore === entrepreneurScore && entrepreneurScore > 0) return 'entrepreneur'
+  if (maxScore === teamworkScore && teamworkScore > 0) return 'teamwork'
+  
+  // 預設返回研究者路線
   return 'specialist'
 }
 

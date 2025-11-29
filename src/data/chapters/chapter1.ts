@@ -127,7 +127,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q1-b',
           text: '走向傳單發送者，順便了解一下這座城市',
-          weights: { D: 0, I: 3, S: 1, C: 0 },
+          weights: { D: 0, I: 2, S: 2, C: 0 },
           riasec: { R: 0, I: 0, A: 1, S: 2, E: 1, C: 0 },
           feedback: '你善於透過與人交流來獲取資訊。這種社交導向的方式讓你很快就能融入新環境。',
           nextScene: 'ch1-street'
@@ -135,7 +135,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q1-c',
           text: '先在服務台排隊，獲取官方的城市指南',
-          weights: { D: 0, I: 0, S: 3, C: 1 },
+          weights: { D: 0, I: 1, S: 3, C: 0 },
           riasec: { R: 0, I: 1, A: 0, S: 1, E: 0, C: 2 },
           feedback: '你傾向於按部就班、遵循正規管道。這種穩健的方式讓你能獲得可靠的資訊。',
           nextScene: 'ch1-street'
@@ -143,7 +143,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q1-d',
           text: '使用自助資訊機，仔細研究城市地圖和交通路線',
-          weights: { D: 1, I: 0, S: 0, C: 3 },
+          weights: { D: 0, I: 0, S: 1, C: 3 },
           riasec: { R: 1, I: 2, A: 0, S: 0, E: 0, C: 1 },
           feedback: '你喜歡獨立蒐集和分析資訊。這種嚴謹的方式讓你對城市有了系統性的了解。',
           nextScene: 'ch1-street'
@@ -205,7 +205,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q2-b',
           text: '選擇評價高的精品旅館，好的開始是成功的一半',
-          weights: { D: 1, I: 1, S: 0, C: 2 },
+          weights: { D: 1, I: 0, S: 1, C: 2 },
           riasec: { R: 0, I: 1, A: 1, S: 0, E: 1, C: 1 },
           feedback: '你重視品質與確定性，願意為更好的體驗付出代價。這反映了你對生活品質的追求。',
           nextScene: 'ch1-hotel'
@@ -213,7 +213,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q2-c',
           text: '選擇青年旅社，可以省錢還能認識其他旅人',
-          weights: { D: 0, I: 2, S: 2, C: 0 },
+          weights: { D: 0, I: 1, S: 3, C: 0 },
           riasec: { R: 0, I: 0, A: 1, S: 3, E: 0, C: 0 },
           feedback: '你重視社交互動與實際的價值。在青年旅社，你有機會結交來自各地的朋友。',
           nextScene: 'ch1-hotel'
@@ -221,7 +221,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q2-d',
           text: '花更多時間比較各選項的評價和價格，找出性價比最高的',
-          weights: { D: 0, I: 0, S: 1, C: 3 },
+          weights: { D: 0, I: 0, S: 0, C: 4 },
           riasec: { R: 0, I: 2, A: 0, S: 0, E: 0, C: 2 },
           feedback: '你習慣做充分的研究和比較再做決定。這種謹慎的態度幫助你做出理性的選擇。',
           nextScene: 'ch1-hotel'
@@ -283,7 +283,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q3-b',
           text: '加入職涯交流群組，先和當地人聊聊了解情況',
-          weights: { D: 0, I: 3, S: 1, C: 0 },
+          weights: { D: 0, I: 2, S: 2, C: 0 },
           riasec: { R: 0, I: 0, A: 0, S: 3, E: 1, C: 0 },
           feedback: '你擅長透過人脈網絡獲取資訊。建立連結是你在新環境中的重要策略。',
           nextScene: 'ch1-evening'
@@ -291,7 +291,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q3-c',
           text: '先報名就業博覽會，按照正規流程尋找機會',
-          weights: { D: 0, I: 0, S: 3, C: 1 },
+          weights: { D: 0, I: 0, S: 4, C: 0 },
           riasec: { R: 0, I: 0, A: 0, S: 1, E: 0, C: 3 },
           feedback: '你習慣遵循既定的系統和流程。這種穩健的方式能讓你獲得正式且可靠的機會。',
           nextScene: 'ch1-evening'
@@ -299,7 +299,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q3-d',
           text: '在求職平台上仔細分析各職缺的要求和趨勢',
-          weights: { D: 1, I: 0, S: 0, C: 3 },
+          weights: { D: 0, I: 0, S: 0, C: 4 },
           riasec: { R: 0, I: 3, A: 0, S: 0, E: 0, C: 1 },
           feedback: '你喜歡先做充分的研究和分析。了解市場需求讓你能更精準地定位自己。',
           nextScene: 'ch1-evening'
@@ -361,7 +361,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q4-b',
           text: '表示興趣並交換聯繫方式，但先不承諾明天的行程',
-          weights: { D: 1, I: 1, S: 2, C: 0 },
+          weights: { D: 0, I: 1, S: 3, C: 0 },
           riasec: { R: 0, I: 0, A: 0, S: 2, E: 1, C: 1 },
           feedback: '你在保持開放的同時也保留彈性。這種平衡的方式讓你不會錯過機會，也不會過度承諾。',
           nextScene: 'ch1-night'
@@ -369,7 +369,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q4-c',
           text: '禮貌婉拒，初來乍到還是謹慎些好',
-          weights: { D: 0, I: 0, S: 2, C: 2 },
+          weights: { D: 0, I: 0, S: 3, C: 1 },
           riasec: { R: 0, I: 1, A: 0, S: 0, E: 0, C: 3 },
           feedback: '你在不確定的情況下選擇謹慎。這種保護性的態度讓你能避免潛在的風險。',
           nextScene: 'ch1-night'
@@ -377,7 +377,7 @@ const chapter1: Chapter = {
         {
           id: 'ch1-q4-d',
           text: '詢問更多關於聚會的細節，了解清楚後再決定',
-          weights: { D: 0, I: 0, S: 0, C: 4 },
+          weights: { D: 0, I: 0, S: 1, C: 3 },
           riasec: { R: 0, I: 2, A: 0, S: 0, E: 0, C: 2 },
           feedback: '你習慣在做決定前蒐集足夠的資訊。這種謹慎的態度幫助你做出更明智的選擇。',
           nextScene: 'ch1-night'

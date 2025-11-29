@@ -124,18 +124,19 @@ const chartData = computed<ChartData<'radar'>>(() => ({
     {
       label: '職業興趣分布',
       data: riasecHexagonOrder.map(code => displayScores.value[code] || 0),
-      backgroundColor: 'rgba(99, 102, 241, 0.35)',
-      borderColor: 'rgba(99, 102, 241, 0.9)',
+      backgroundColor: 'rgba(99, 102, 241, 0.25)',
+      borderColor: 'rgba(99, 102, 241, 0.85)',
       borderWidth: 3,
       pointBackgroundColor: riasecHexagonOrder.map(code => riasecTypes[code]?.color || '#6366f1'),
       pointBorderColor: '#fff',
-      pointBorderWidth: 2,
+      pointBorderWidth: 3,
       pointRadius: radarPointRadius.value,
-      pointHoverRadius: radarPointRadius.value + 4,
+      pointHoverRadius: radarPointRadius.value + 5,
       pointHoverBackgroundColor: riasecHexagonOrder.map(code => riasecTypes[code]?.color || '#6366f1'),
       pointHoverBorderColor: '#fff',
-      pointHoverBorderWidth: 3,
-      fill: true
+      pointHoverBorderWidth: 4,
+      fill: true,
+      tension: 0.1  // 讓線條稍微平滑
     }
   ]
 }))
