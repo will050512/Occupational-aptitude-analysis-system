@@ -464,4 +464,90 @@ function setActiveTab(tab: 'disc' | 'riasec') {
   opacity: 1;
   max-height: 2000px;
 }
+
+/* 深色模式支援 */
+:root.dark-mode .theory-accordion {
+  background: var(--color-bg-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .accordion-header {
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+}
+
+:root.dark-mode .accordion-header:hover {
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
+}
+
+:root.dark-mode .accordion-header.expanded {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+:root.dark-mode .accordion-content {
+  background: var(--color-bg-card);
+}
+
+:root.dark-mode .tab-btn.active {
+  background: var(--color-bg-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+:root.dark-mode .application-tag {
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+  border-color: rgba(193, 127, 89, 0.3);
+  color: var(--color-text-secondary);
+}
+
+:root.dark-mode .theory-note {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%);
+  border-color: rgba(33, 150, 243, 0.3);
+}
+
+:root.dark-mode .theory-note p {
+  color: #64B5F6;
+}
+
+/* 系統深色模式偏好支援 */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) .theory-accordion {
+    background: var(--color-bg-card);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  :root:not(.light-mode) .accordion-header {
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+  }
+
+  :root:not(.light-mode) .accordion-header:hover {
+    background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
+  }
+
+  :root:not(.light-mode) .accordion-header.expanded {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  :root:not(.light-mode) .accordion-content {
+    background: var(--color-bg-card);
+  }
+
+  :root:not(.light-mode) .tab-btn.active {
+    background: var(--color-bg-card);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  :root:not(.light-mode) .application-tag {
+    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+    border-color: rgba(193, 127, 89, 0.3);
+    color: var(--color-text-secondary);
+  }
+
+  :root:not(.light-mode) .theory-note {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%);
+    border-color: rgba(33, 150, 243, 0.3);
+  }
+
+  :root:not(.light-mode) .theory-note p {
+    color: #64B5F6;
+  }
+}
 </style>

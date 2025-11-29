@@ -45,6 +45,19 @@ export interface StoryState {
   interactiveResults: InteractiveResult[]
   /** 累計 DISC 分數（用於 Q4 判定） */
   discScores: { D: number; I: number; S: number; C: number }
+  /** 場景歷史（用於返回功能） */
+  sceneHistory: SceneHistoryEntry[]
+}
+
+/**
+ * 場景歷史記錄項目
+ */
+export interface SceneHistoryEntry {
+  sceneId: string
+  chapterIndex: number
+  branchSceneIndex: number
+  discScores: { D: number; I: number; S: number; C: number }
+  timestamp: number
 }
 
 export class StoryManager {
@@ -71,8 +84,13 @@ export class StoryManager {
       if (savedProgress.eventChoices) {
         this.randomEventManager.restore({
           triggeredEventIds: savedProgress.triggeredEventIds || [],
-          eventChoices: savedProgress.eventChoices
+          eventChoices: savedProgress.eventChoices,
+          currentBranch: savedProgress.currentBranch || null
         })
+      }
+      // 如果有分支但沒有事件紀錄，也要同步分支
+      if (savedProgress.currentBranch) {
+        this.randomEventManager.setCurrentBranch(savedProgress.currentBranch)
       }
       // 還原互動計分器狀態
       if (savedProgress.interactiveResults) {
@@ -111,7 +129,21 @@ export class StoryManager {
         branchSceneIndex: savedProgress.branchSceneIndex || 0,
         eventChoices: savedProgress.eventChoices || [],
         interactiveResults: savedProgress.interactiveResults || [],
-        discScores: savedProgress.discScores || { D: 0, I: 0, S: 0, C: 0 }
+        discScores: savedProgress.discScores || { D: 0, I: 0, S: 0, C: 0 },
+        // 轉換舊格式歷史記錄
+        sceneHistory: (savedProgress.sceneHistory || []).map((h: { 
+          sceneId: string
+          chapterIndex?: number
+          branchSceneIndex?: number
+          discScores?: { D: number; I: number; S: number; C: number }
+          timestamp: number 
+        }) => ({
+          sceneId: h.sceneId,
+          chapterIndex: h.chapterIndex || 0,
+          branchSceneIndex: h.branchSceneIndex || 0,
+          discScores: h.discScores || { D: 0, I: 0, S: 0, C: 0 },
+          timestamp: h.timestamp
+        }))
       }
     }
     
@@ -140,7 +172,8 @@ export class StoryManager {
       branchSceneIndex: 0,
       eventChoices: [],
       interactiveResults: [],
-      discScores: { D: 0, I: 0, S: 0, C: 0 }
+      discScores: { D: 0, I: 0, S: 0, C: 0 },
+      sceneHistory: []
     }
   }
 
@@ -296,10 +329,59 @@ export class StoryManager {
   }
 
   /**
+   * 獲取章節索引（用於進度指示器）
+   */
+  get currentChapterIndex(): ComputedRef<number> {
+    return computed(() => this.state.value.currentChapterIndex)
+  }
+
+  /**
+   * 獲取當前場景在章節中的索引
+   */
+  get currentSceneIndex(): ComputedRef<number> {
+    return computed(() => {
+      const sceneId = this.state.value.currentSceneId
+      const chapter = this.currentChapter.value
+      if (!chapter) return 0
+      
+      const sceneIndex = chapter.scenes.findIndex(s => s.id === sceneId)
+      return sceneIndex >= 0 ? sceneIndex : this.state.value.branchSceneIndex
+    })
+  }
+
+  /**
+   * 獲取總章節數
+   */
+  getTotalChapters(): number {
+    return chapters.length
+  }
+
+  /**
+   * 獲取當前分支類型（用於進度指示器）
+   */
+  getCurrentBranch(): BranchType | null {
+    return this.state.value.currentBranch
+  }
+
+  /**
    * 獲取互動題結果
    */
   get interactiveResults(): InteractiveResult[] {
     return this.state.value.interactiveResults
+  }
+
+  /**
+   * 獲取當前進度資訊
+   */
+  getProgress(): { currentQuestionNumber: number; totalQuestions: number; choices: ChoiceRecord[] } | null {
+    if (!this.state.value || this.state.value.choices.length === 0) {
+      return null
+    }
+    return {
+      currentQuestionNumber: this.currentQuestionNumber.value,
+      totalQuestions: 16,
+      choices: this.state.value.choices
+    }
   }
 
   /**
@@ -343,6 +425,85 @@ export class StoryManager {
   }
 
   /**
+   * 記錄當前場景到歷史
+   */
+  private pushSceneHistory(): void {
+    const entry: SceneHistoryEntry = {
+      sceneId: this.state.value.currentSceneId,
+      chapterIndex: this.state.value.currentChapterIndex,
+      branchSceneIndex: this.state.value.branchSceneIndex,
+      discScores: { ...this.state.value.discScores },
+      timestamp: Date.now()
+    }
+    this.state.value.sceneHistory.push(entry)
+    
+    // 限制歷史長度，防止無限增長
+    if (this.state.value.sceneHistory.length > 20) {
+      this.state.value.sceneHistory.shift()
+    }
+  }
+
+  /**
+   * 返回上一個場景
+   * @returns 是否成功返回
+   */
+  goBack(): boolean {
+    if (!this.canGoBack()) return false
+    
+    const prevEntry = this.state.value.sceneHistory.pop()
+    if (!prevEntry) return false
+    
+    // 還原狀態
+    this.state.value.currentSceneId = prevEntry.sceneId
+    this.state.value.currentChapterIndex = prevEntry.chapterIndex
+    this.state.value.branchSceneIndex = prevEntry.branchSceneIndex
+    this.state.value.discScores = { ...prevEntry.discScores }
+    this.state.value.isComplete = false
+    
+    // 移除最後一個選擇記錄
+    const lastChoice = this.state.value.choices.pop()
+    
+    // 如果是 Q4，需要重置分支
+    if (lastChoice && lastChoice.questionNumber === 4) {
+      this.state.value.currentBranch = null
+      this.state.value.branchSceneIndex = 0
+      // 同步重置隨機事件管理器的分支
+      this.randomEventManager.setCurrentBranch(null)
+    }
+    
+    // 移除最後一個互動結果（如果有）
+    const scene = this.currentScene.value
+    if (scene && (scene as unknown as { interactiveType?: string }).interactiveType) {
+      const lastResult = this.state.value.interactiveResults.pop()
+      if (lastResult) {
+        this.interactiveScoring.removeResult(lastResult.questionId)
+      }
+    }
+    
+    // 清除待處理的隨機事件
+    this.pendingRandomEvent = null
+    
+    this.state.value.lastUpdateTime = Date.now()
+    this.saveProgress()
+    
+    return true
+  }
+
+  /**
+   * 是否可以返回上一步
+   */
+  canGoBack(): boolean {
+    return this.state.value.sceneHistory.length > 0
+  }
+
+  /**
+   * 獲取歷史長度
+   */
+  get historyLength(): number {
+    return this.state.value.sceneHistory.length
+  }
+
+  /**
    * 累計 DISC 分數
    */
   private accumulateDISCScores(choice: Choice): void {
@@ -361,6 +522,9 @@ export class StoryManager {
   makeChoice(choice: Choice): void {
     const scene = this.currentScene.value
     if (!scene) return
+
+    // 記錄當前場景到歷史（用於返回功能）
+    this.pushSceneHistory()
 
     // 累計 DISC 分數（用於分支判定）
     this.accumulateDISCScores(choice)
@@ -390,6 +554,8 @@ export class StoryManager {
         const branch = determineBranch(this.state.value.discScores)
         this.state.value.currentBranch = branch
         this.state.value.branchSceneIndex = 0
+        // 同步分支給隨機事件管理器
+        this.randomEventManager.setCurrentBranch(branch)
       }
     }
 

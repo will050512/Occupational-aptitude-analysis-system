@@ -13,11 +13,13 @@ export type { Chapter, Scene, Choice, SceneVariant }
 
 /**
  * 分支路線類型
- * - entrepreneur: 創業者路線（D/I 傾向高）
- * - teamwork: 協作者路線（S 傾向高）
+ * - entrepreneur: 創業者路線（D 傾向高）
+ * - teamwork: 協作者路線（S 傾向高，但 C 不高）
  * - specialist: 研究者路線（C 傾向高）
+ * - creative: 創意者路線（I 傾向高）
+ * - public: 公僕者路線（S 與 C 都高）
  */
-export type BranchType = 'entrepreneur' | 'teamwork' | 'specialist'
+export type BranchType = 'entrepreneur' | 'teamwork' | 'specialist' | 'creative' | 'public'
 
 /**
  * DISC 分數介面
@@ -48,10 +50,10 @@ export const BRANCH_META: Record<BranchType, BranchMeta> = {
   entrepreneur: {
     id: 'entrepreneur',
     name: '創業先鋒',
-    description: '你展現出強烈的領導力與影響力，勇於挑戰未知、把握機會。',
+    description: '你展現出強烈的領導力與決斷力，勇於挑戰未知、把握機會。',
     icon: '🚀',
     color: '#E07B54',
-    primaryTraits: ['決斷力', '影響力', '冒險精神']
+    primaryTraits: ['決斷力', '主導性', '冒險精神']
   },
   teamwork: {
     id: 'teamwork',
@@ -68,6 +70,22 @@ export const BRANCH_META: Record<BranchType, BranchMeta> = {
     icon: '🔬',
     color: '#8B7355',
     primaryTraits: ['分析力', '專注度', '求知慾']
+  },
+  creative: {
+    id: 'creative',
+    name: '創意者',
+    description: '你充滿創意與想像力，善於表達獨特觀點並勇於創新。',
+    icon: '🎨',
+    color: '#9B59B6',
+    primaryTraits: ['創造力', '影響力', '表達力']
+  },
+  public: {
+    id: 'public',
+    name: '公僕者',
+    description: '你關心公共利益與社會價值，重視穩定秩序與服務精神。',
+    icon: '🏛️',
+    color: '#3498DB',
+    primaryTraits: ['服務心', '穩定性', '責任感']
   }
 }
 
@@ -83,19 +101,18 @@ export const BRANCH_DECISION_QUESTION = 4
 
 /**
  * 根據 DISC 分數決定分支路線
- * 採用「最大維度優先 + 次要維度加權」策略
+ * 採用「最大維度優先 + 組合判定」策略
  * 
  * 規則：
  * 1. 計算各維度百分比分布
  * 2. 找出最大維度（primary）和次要維度（secondary）
  * 3. 判定規則：
- *    - D 或 I 為最大維度，且超過均值（25%）一定比例 → entrepreneur（創業者）
- *    - S 為最大維度，且超過均值一定比例 → teamwork（協作者）
- *    - C 為最大維度，或分布較為均衡 → specialist（研究者）
- * 4. 次要維度加權修正：
- *    - D+I 組合強化創業者傾向
- *    - S+I 或 S+C 組合強化協作者傾向
- *    - C+I 或 C+S 組合強化研究者傾向
+ *    - D 為最大維度，且超過閾值 → entrepreneur（創業先鋒）
+ *    - I 為最大維度，且超過閾值 → creative（創意者）
+ *    - S 為最大維度，但 C 不高 → teamwork（協作大師）
+ *    - C 為最大維度 → specialist（專業探索者）
+ *    - S 與 C 都高（差距小於 5%）→ public（公僕者）
+ * 4. 邊界情況使用複合分數決定
  */
 export function determineBranch(discScores: DISCScores): BranchType {
   const { D, I, S, C } = discScores
@@ -138,63 +155,78 @@ export function determineBranch(discScores: DISCScores): BranchType {
   const isBalanced = stdDev < (mean * 0.3) // 標準差小於均值的 30% 視為均衡
   
   // 計算複合分數（用於邊界情況的判定）
-  const entrepreneurScore = deviationD + deviationI + (primary.key === 'D' || primary.key === 'I' ? 5 : 0)
-  const teamworkScore = deviationS + (deviationI * 0.3) + (primary.key === 'S' ? 5 : 0)
-  const specialistScore = deviationC + (deviationI * 0.2) + (deviationS * 0.2) + (primary.key === 'C' ? 5 : 0)
+  const entrepreneurScore = deviationD + (deviationI * 0.2) + (primary.key === 'D' ? 5 : 0)
+  const creativeScore = deviationI + (deviationD * 0.2) + (primary.key === 'I' ? 5 : 0)
+  const teamworkScore = deviationS - (deviationC * 0.3) + (primary.key === 'S' ? 5 : 0)
+  const specialistScore = deviationC + (deviationI * 0.2) + (primary.key === 'C' ? 5 : 0)
+  const publicScore = (deviationS + deviationC) / 2 + (Math.abs(deviationS - deviationC) < 5 ? 5 : 0)
   
   // 主要判定邏輯
   
-  // 1. D 或 I 為最大維度，且偏差 > 3%，傾向創業者
-  if ((primary.key === 'D' || primary.key === 'I') && primary.deviation > 3) {
-    // 次要維度加權：如果次要也是 D 或 I，強化創業者傾向
-    if (secondary.key === 'D' || secondary.key === 'I') {
-      return 'entrepreneur'
-    }
-    // 如果次要是 S 且 S 偏差也很高，可能轉向協作者
-    if (secondary.key === 'S' && secondary.deviation > 5) {
-      return entrepreneurScore > teamworkScore ? 'entrepreneur' : 'teamwork'
-    }
-    // 如果次要是 C 且 C 偏差也很高，可能轉向研究者
-    if (secondary.key === 'C' && secondary.deviation > 5) {
-      return entrepreneurScore > specialistScore ? 'entrepreneur' : 'specialist'
-    }
+  // 1. 檢查 S+C 組合（公僕者優先判定）
+  // 當 S 和 C 都高於均值，且差距小於 5%
+  if (deviationS > 2 && deviationC > 2 && Math.abs(deviationS - deviationC) < 5) {
+    return 'public'
+  }
+  
+  // 2. D 為最大維度，且偏差 > 3%，傾向創業者
+  if (primary.key === 'D' && primary.deviation > 3) {
     return 'entrepreneur'
   }
   
-  // 2. S 為最大維度，且偏差 > 2%，傾向協作者
-  if (primary.key === 'S' && primary.deviation > 2) {
-    // 次要維度加權
-    if (secondary.key === 'I' && secondary.deviation > 0) {
-      return 'teamwork' // S+I 組合強化協作者
-    }
-    if (secondary.key === 'C' && secondary.deviation > 3) {
-      // S+C 組合需要進一步判斷
-      return teamworkScore > specialistScore ? 'teamwork' : 'specialist'
-    }
+  // 3. I 為最大維度，且偏差 > 3%，傾向創意者
+  if (primary.key === 'I' && primary.deviation > 3) {
+    // 如果次要是 D 且 D 偏差很高，可能轉向創業者
     if (secondary.key === 'D' && secondary.deviation > 5) {
-      // S+D 組合可能轉向創業者
-      return teamworkScore > entrepreneurScore ? 'teamwork' : 'entrepreneur'
+      return creativeScore > entrepreneurScore ? 'creative' : 'entrepreneur'
+    }
+    return 'creative'
+  }
+  
+  // 4. S 為最大維度，且偏差 > 2%，傾向協作者或公僕者
+  if (primary.key === 'S' && primary.deviation > 2) {
+    // 如果 C 也很高，轉向公僕者
+    if (deviationC > 3) {
+      return teamworkScore > publicScore ? 'teamwork' : 'public'
     }
     return 'teamwork'
   }
   
-  // 3. C 為最大維度，傾向研究者
+  // 5. C 為最大維度，傾向研究者或公僕者
   if (primary.key === 'C' && primary.deviation > 0) {
+    // 如果 S 也很高，轉向公僕者
+    if (deviationS > 3) {
+      return specialistScore > publicScore ? 'specialist' : 'public'
+    }
     return 'specialist'
   }
   
-  // 4. 分布均衡的情況，根據複合分數決定
+  // 6. 分布均衡的情況，根據複合分數決定
   if (isBalanced) {
-    const maxScore = Math.max(entrepreneurScore, teamworkScore, specialistScore)
-    if (maxScore === entrepreneurScore) return 'entrepreneur'
-    if (maxScore === teamworkScore) return 'teamwork'
-    return 'specialist'
+    const allScores = [
+      { branch: 'entrepreneur' as BranchType, score: entrepreneurScore },
+      { branch: 'creative' as BranchType, score: creativeScore },
+      { branch: 'teamwork' as BranchType, score: teamworkScore },
+      { branch: 'specialist' as BranchType, score: specialistScore },
+      { branch: 'public' as BranchType, score: publicScore }
+    ]
+    allScores.sort((a, b) => b.score - a.score)
+    return allScores[0]!.branch
   }
   
-  // 5. 邊界情況：使用複合分數決定
-  const maxScore = Math.max(entrepreneurScore, teamworkScore, specialistScore)
-  if (maxScore === entrepreneurScore && entrepreneurScore > 0) return 'entrepreneur'
-  if (maxScore === teamworkScore && teamworkScore > 0) return 'teamwork'
+  // 7. 邊界情況：使用複合分數決定
+  const allScores = [
+    { branch: 'entrepreneur' as BranchType, score: entrepreneurScore },
+    { branch: 'creative' as BranchType, score: creativeScore },
+    { branch: 'teamwork' as BranchType, score: teamworkScore },
+    { branch: 'specialist' as BranchType, score: specialistScore },
+    { branch: 'public' as BranchType, score: publicScore }
+  ]
+  allScores.sort((a, b) => b.score - a.score)
+  
+  if (allScores[0]!.score > 0) {
+    return allScores[0]!.branch
+  }
   
   // 預設返回研究者路線
   return 'specialist'
@@ -211,7 +243,7 @@ export function getBranchMeta(branch: BranchType): BranchMeta {
  * 獲取所有分支類型
  */
 export function getAllBranchTypes(): BranchType[] {
-  return ['entrepreneur', 'teamwork', 'specialist']
+  return ['entrepreneur', 'teamwork', 'specialist', 'creative', 'public']
 }
 
 /**

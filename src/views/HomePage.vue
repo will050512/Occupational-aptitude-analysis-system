@@ -5,6 +5,11 @@
 
     <!-- 主頁面內容 -->
     <div v-else class="home-content">
+      <!-- 主題切換器 -->
+      <div class="theme-toggle-wrapper">
+        <ThemeToggle variant="full" size="md" />
+      </div>
+      
       <!-- 頂部裝飾 -->
       <div class="hero-decoration">
         <div class="cloud cloud-1 animate-floatSlow"></div>
@@ -96,6 +101,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SplashScreen from '@/components/SplashScreen.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { StorageService } from '@/services/StorageService'
 
 const router = useRouter()
@@ -145,6 +151,23 @@ const continueGame = () => {
   padding: var(--spacing-lg);
   padding-bottom: var(--spacing-2xl);
   position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* 主題切換器定位 */
+.theme-toggle-wrapper {
+  position: fixed;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 100;
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .theme-toggle-wrapper {
+    top: calc(var(--spacing-md) + env(safe-area-inset-top));
+    right: calc(var(--spacing-md) + env(safe-area-inset-right));
+  }
 }
 
 /* 頂部裝飾 */
@@ -165,7 +188,7 @@ const continueGame = () => {
   left: 10%;
   width: 80px;
   height: 30px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--color-overlay-light);
   border-radius: 20px;
 }
 
@@ -174,7 +197,7 @@ const continueGame = () => {
   position: absolute;
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--color-overlay-light);
   border-radius: 50%;
   top: -20px;
   left: 15px;
@@ -186,7 +209,7 @@ const continueGame = () => {
   right: 15%;
   width: 60px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-overlay-medium);
   border-radius: 15px;
 }
 
@@ -195,7 +218,7 @@ const continueGame = () => {
   position: absolute;
   width: 30px;
   height: 30px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-overlay-medium);
   border-radius: 50%;
   top: -15px;
   left: 10px;
@@ -215,7 +238,7 @@ const continueGame = () => {
 /* 主視覺區 */
 .hero-section {
   position: relative;
-  padding-top: 80px;
+  padding-top: 60px;
   text-align: center;
   z-index: 1;
   flex-shrink: 0;
@@ -242,11 +265,12 @@ const continueGame = () => {
 .title-main {
   display: block;
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-size: clamp(2.2rem, 10vw, 4rem);
   font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.1em;
   margin-bottom: var(--spacing-xs);
+  text-shadow: 0 2px 10px rgba(224, 123, 84, 0.2);
 }
 
 .title-sub {
@@ -255,7 +279,7 @@ const continueGame = () => {
   font-size: clamp(1rem, 4vw, 1.5rem);
   font-weight: 500;
   color: var(--color-text-secondary);
-  letter-spacing: 0.2em;
+  letter-spacing: 0.3em;
 }
 
 .hero-description {
@@ -265,7 +289,7 @@ const continueGame = () => {
   margin-bottom: var(--spacing-xl);
 }
 
-/* CTA 區 */
+/* CTA 區 - 響應式增強 */
 .cta-section {
   display: flex;
   flex-direction: column;
@@ -278,7 +302,7 @@ const continueGame = () => {
 .start-btn,
 .continue-btn {
   width: 100%;
-  max-width: 280px;
+  max-width: 320px;
   min-height: 56px;
   font-size: var(--text-lg);
   display: flex;
@@ -288,21 +312,44 @@ const continueGame = () => {
   border-radius: var(--radius-xl);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
 }
 
 .start-btn {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  color: white;
+  color: var(--color-text-inverse);
   border: none;
-  box-shadow: 0 4px 15px rgba(224, 123, 84, 0.4);
+  box-shadow: 0 4px 20px rgba(224, 123, 84, 0.4);
+}
+
+/* 按鈕光暈動畫 */
+.start-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-overlay-medium),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.start-btn:hover::before {
+  left: 100%;
 }
 
 .start-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(224, 123, 84, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(224, 123, 84, 0.5);
 }
 
 .start-btn:active {
@@ -310,7 +357,7 @@ const continueGame = () => {
 }
 
 .continue-btn {
-  background: white;
+  background: var(--color-bg-card);
   color: var(--color-text-primary);
   border: 2px solid var(--color-bg-tertiary);
 }
@@ -318,6 +365,7 @@ const continueGame = () => {
 .continue-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  background: rgba(224, 123, 84, 0.05);
 }
 
 .continue-btn:active {
@@ -328,7 +376,7 @@ const continueGame = () => {
   font-size: 1.25rem;
 }
 
-/* 特色說明 */
+/* 特色說明 - 響應式網格 */
 .features-section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -340,34 +388,40 @@ const continueGame = () => {
 .feature-card {
   text-align: center;
   padding: var(--spacing-md) var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--color-overlay-light);
   border-radius: var(--radius-lg);
-  transition: transform var(--transition-fast);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  backdrop-filter: blur(10px);
 }
 
 .feature-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  background: var(--color-overlay-heavy);
+  border-color: var(--color-bg-tertiary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .feature-icon {
-  font-size: clamp(1.5rem, 5vw, 2rem);
-  margin-bottom: var(--spacing-xs);
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  margin-bottom: var(--spacing-sm);
+  display: block;
 }
 
 .feature-card h3 {
-  font-size: clamp(0.75rem, 2.5vw, 1rem);
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
   font-weight: 600;
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-xs);
 }
 
 .feature-card p {
-  font-size: clamp(0.65rem, 2vw, 0.875rem);
+  font-size: clamp(0.7rem, 2vw, 0.875rem);
   color: var(--color-text-muted);
   line-height: var(--leading-normal);
 }
 
-/* 快速入口 */
+/* 快速入口 - 響應式 */
 .quick-links {
   display: flex;
   justify-content: center;
@@ -383,16 +437,20 @@ const continueGame = () => {
   gap: var(--spacing-xs);
   text-decoration: none;
   color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
+  transition: all 0.3s ease;
   padding: var(--spacing-md);
   min-width: 80px;
   border-radius: var(--radius-lg);
   -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  border: 2px solid transparent;
 }
 
 .quick-link:hover {
   color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--color-overlay-light);
+  border-color: var(--color-bg-tertiary);
+  transform: translateY(-2px);
 }
 
 .quick-link:active {
@@ -400,7 +458,7 @@ const continueGame = () => {
 }
 
 .quick-link-icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
 }
 
 .quick-link-text {
@@ -485,35 +543,82 @@ const continueGame = () => {
   50% { transform: scale(1.05); opacity: 0.9; }
 }
 
-/* 響應式調整 - 平板 */
-@media (min-width: 768px) {
+/* ========================================
+   響應式調整 - 小手機 (≤375px)
+   ======================================== */
+@media (max-width: 375px) {
   .home-content {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-md);
   }
   
   .features-section {
-    gap: var(--spacing-xl);
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
   
-  .quick-links {
-    gap: var(--spacing-2xl);
+  .feature-card {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
   }
   
-  .quick-link {
-    min-width: 100px;
+  .feature-icon {
+    margin-bottom: 0;
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .feature-card h3,
+  .feature-card p {
+    text-align: left;
   }
 }
 
-/* 響應式調整 - 桌面 */
-@media (min-width: 1024px) {
+/* ========================================
+   響應式調整 - 平板 (≥480px)
+   ======================================== */
+@media (min-width: 480px) {
   .home-content {
-    max-width: 800px;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+  }
+  
+  .hero-section {
+    padding-top: 80px;
+  }
+  
+  .features-section {
+    gap: var(--spacing-md);
+  }
+  
+  .feature-card {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+}
+
+/* ========================================
+   響應式調整 - 大平板 (≥768px)
+   ======================================== */
+@media (min-width: 768px) {
+  .home-content {
+    max-width: 700px;
+    padding: var(--spacing-2xl);
   }
   
   .hero-section {
     padding-top: 100px;
+  }
+  
+  .hero-decoration {
+    height: 250px;
+  }
+  
+  .hero-decoration .sun {
+    width: 60px;
+    height: 60px;
   }
   
   .cta-section {
@@ -525,8 +630,127 @@ const continueGame = () => {
   .start-btn,
   .continue-btn {
     width: auto;
-    min-width: 200px;
+    min-width: 220px;
     padding: var(--spacing-md) var(--spacing-2xl);
+  }
+  
+  .features-section {
+    gap: var(--spacing-lg);
+  }
+  
+  .quick-links {
+    gap: var(--spacing-2xl);
+  }
+  
+  .quick-link {
+    min-width: 100px;
+    padding: var(--spacing-lg);
+  }
+  
+  .quick-link-icon {
+    font-size: 2rem;
+  }
+}
+
+/* ========================================
+   響應式調整 - 桌面 (≥1024px)
+   ======================================== */
+@media (min-width: 1024px) {
+  .home-content {
+    max-width: 900px;
+    padding: var(--spacing-3xl);
+  }
+  
+  .hero-section {
+    padding-top: 120px;
+  }
+  
+  .hero-decoration {
+    height: 300px;
+  }
+  
+  .hero-decoration .sun {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .cloud-1 {
+    width: 100px;
+    height: 40px;
+  }
+  
+  .cloud-2 {
+    width: 80px;
+    height: 32px;
+  }
+  
+  .features-section {
+    gap: var(--spacing-xl);
+  }
+  
+  .feature-card {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+  
+  .feature-icon {
+    font-size: 2.5rem;
+  }
+  
+  .quick-links {
+    gap: var(--spacing-3xl);
+  }
+}
+
+/* ========================================
+   響應式調整 - 寬螢幕 (≥1280px)
+   ======================================== */
+@media (min-width: 1280px) {
+  .home-content {
+    max-width: 1000px;
+  }
+  
+  .hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hero-description {
+    max-width: 600px;
+  }
+}
+
+/* ========================================
+   橫向模式優化 (手機橫向)
+   ======================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .home-content {
+    padding: var(--spacing-md);
+  }
+  
+  .hero-section {
+    padding-top: 40px;
+  }
+  
+  .hero-decoration {
+    height: 120px;
+  }
+  
+  .hero-description {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .features-section {
+    margin: var(--spacing-md) 0;
+  }
+  
+  .quick-links {
+    padding: var(--spacing-sm) 0;
+  }
+  
+  .app-footer {
+    padding: var(--spacing-sm) 0;
+    margin-top: var(--spacing-md);
   }
 }
 
@@ -534,6 +758,48 @@ const continueGame = () => {
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .home-content {
     padding-bottom: calc(var(--spacing-2xl) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
+   觸控設備優化
+   ======================================== */
+@media (hover: none) and (pointer: coarse) {
+  .start-btn:hover::before {
+    left: -100%;
+  }
+  
+  .start-btn:hover {
+    transform: none;
+    box-shadow: 0 4px 20px rgba(224, 123, 84, 0.4);
+  }
+  
+  .feature-card:hover {
+    transform: none;
+    background: var(--color-overlay-light);
+  }
+  
+  .quick-link:hover {
+    transform: none;
+    background: transparent;
+    border-color: transparent;
+  }
+  
+  /* 觸控反饋 */
+  .start-btn:active,
+  .continue-btn:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+  
+  .feature-card:active {
+    transform: scale(0.98);
+    background: var(--color-overlay-heavy);
+  }
+  
+  .quick-link:active {
+    transform: scale(0.95);
+    background: var(--color-bg-secondary);
   }
 }
 </style>

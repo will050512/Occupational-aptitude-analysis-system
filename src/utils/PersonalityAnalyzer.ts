@@ -306,6 +306,18 @@ export const BRANCH_CALIBRATIONS: Record<BranchType, BranchCalibration> = {
     // 研究路線天然偏向 C，降低 C 的影響
     discFactors: { D: 1.0, I: 1.0, S: 1.0, C: 0.85 },
     riasecFactors: { I: 0.9 }
+  },
+  creative: {
+    version: 'V1',
+    // 創意路線天然偏向 I，降低 I 的影響
+    discFactors: { D: 1.0, I: 0.85, S: 1.0, C: 1.0 },
+    riasecFactors: { A: 0.9 }
+  },
+  public: {
+    version: 'V1',
+    // 公僕路線天然偏向 S+C，平衡降低
+    discFactors: { D: 1.0, I: 1.0, S: 0.90, C: 0.90 },
+    riasecFactors: { S: 0.90, C: 0.90 }
   }
 }
 

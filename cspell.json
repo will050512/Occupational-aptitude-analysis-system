@@ -11,7 +11,9 @@
     "vuejs",
     "pnpm",
     "vite",
-    "tsbuildinfo"
+    "tsbuildinfo",
+    "collab",
+    "conv"
   ],
   "ignorePaths": [
     "node_modules",

@@ -321,9 +321,9 @@ const displayTags = computed(() => {
   gap: 0.75rem;
   margin-top: 1.25rem;
   padding: 1rem;
-  background: linear-gradient(135deg, #fef9e7 0%, #fdf6e3 100%);
+  background: linear-gradient(135deg, var(--disc-I-bg) 0%, var(--color-warning-bg) 100%);
   border-radius: 10px;
-  border-left: 4px solid #f4c430;
+  border-left: 4px solid var(--color-accent);
 }
 
 .feedback-icon {
@@ -368,7 +368,7 @@ const displayTags = computed(() => {
 .popup-confirm {
   background: var(--primary-color, #4a90d9);
   border: none;
-  color: white;
+  color: var(--color-text-inverse);
   min-width: 120px;
 }
 

@@ -7,6 +7,7 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { PersonalityType } from '@/data/personality-types'
 import { companyInfo, getLogoBase64 } from '@/assets/company-logo'
+import type { BranchType, RiasecVariant } from '@/services/ScoringCenter'
 
 export interface PdfReportData {
   nickname: string
@@ -17,7 +18,9 @@ export interface PdfReportData {
   relatedTypes: PersonalityType[]
   completedAt: string
   // 新增：擴展個人化數據
-  branchRoute?: 'entrepreneur' | 'teamwork' | 'specialist'
+  branchRoute?: BranchType
+  riasecVariant?: RiasecVariant
+  fullRouteLabel?: string
   totalChoices?: number
   confidence?: number
   uniqueTags?: string[]
@@ -154,11 +157,23 @@ function getCareers(typeId: string): { title: string; match: number }[] {
   return careersMap[typeId] ?? careersMap['default'] ?? []
 }
 
-// 路線名稱對應
-const branchNames: Record<string, { name: string; icon: string; desc: string }> = {
-  entrepreneur: { name: '創業路線', icon: '🚀', desc: '勇於開創、追求突破' },
-  teamwork: { name: '團隊協作路線', icon: '🤝', desc: '重視合作、凝聚團隊' },
-  specialist: { name: '專業深耕路線', icon: '🔬', desc: '專注深入、追求卓越' }
+// 路線名稱對應（5 大主線）
+const branchNames: Record<string, { name: string; icon: string; desc: string; color: string }> = {
+  entrepreneur: { name: '創業路線', icon: '🚀', desc: '勇於開創、追求突破', color: '#FF5722' },
+  teamwork: { name: '團隊協作路線', icon: '🤝', desc: '重視合作、凝聚團隊', color: '#4CAF50' },
+  specialist: { name: '專業深耕路線', icon: '🔬', desc: '專注深入、追求卓越', color: '#2196F3' },
+  creative: { name: '創意設計路線', icon: '🎨', desc: '發揮創意、設計未來', color: '#9C27B0' },
+  public: { name: '公共服務路線', icon: '🏛️', desc: '服務大眾、貢獻社會', color: '#607D8B' }
+}
+
+// RIASEC 變體名稱對應
+const riasecVariantNames: Record<string, { name: string; icon: string; desc: string; color: string }> = {
+  R: { name: '實作型', icon: '🔧', color: '#4CAF50', desc: '注重實務操作與技術應用' },
+  I: { name: '研究型', icon: '🔬', color: '#2196F3', desc: '注重分析探索與知識追求' },
+  A: { name: '藝術型', icon: '🎨', color: '#9C27B0', desc: '注重創意表達與美學設計' },
+  S: { name: '社會型', icon: '💝', color: '#E91E63', desc: '注重人際關懷與助人服務' },
+  E: { name: '企業型', icon: '💼', color: '#FF9800', desc: '注重領導統御與商業發展' },
+  C: { name: '事務型', icon: '📋', color: '#607D8B', desc: '注重組織規劃與細節管理' }
 }
 
 // 生成個人獨特標籤
@@ -419,13 +434,30 @@ export class PdfGenerator {
 
         ${branchInfo ? `
         <!-- 探索路線 -->
-        <div style="margin-top: 14px; padding: 12px 18px; background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(33, 150, 243, 0.2);">
-          <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);">${branchInfo.icon}</div>
-          <div>
-            <span style="color: #1565C0; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">探索路線</span>
+        <div style="margin-top: 14px; padding: 12px 18px; background: linear-gradient(135deg, ${branchInfo.color}15 0%, ${branchInfo.color}25 100%); border-radius: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid ${branchInfo.color}40;">
+          <div style="width: 38px; height: 38px; background: linear-gradient(135deg, ${branchInfo.color} 0%, ${branchInfo.color}DD 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; box-shadow: 0 2px 8px ${branchInfo.color}50;">${branchInfo.icon}</div>
+          <div style="flex: 1;">
+            <span style="color: ${branchInfo.color}; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">探索路線</span>
             <p style="color: #5D4E37; font-size: 14px; font-weight: bold; margin: 2px 0 0 0;">${branchInfo.name} - ${branchInfo.desc}</p>
           </div>
+          ${data.riasecVariant && riasecVariantNames[data.riasecVariant] ? (() => {
+            const vInfo = riasecVariantNames[data.riasecVariant!]!
+            return `
+          <div style="text-align: right;">
+            <span style="display: inline-block; padding: 4px 10px; background: ${vInfo.color}20; border-radius: 12px; font-size: 11px; color: ${vInfo.color}; font-weight: bold;">
+              ${vInfo.icon} ${vInfo.name}
+            </span>
+          </div>
+          `
+          })() : ''}
         </div>
+        ${data.fullRouteLabel ? `
+        <div style="margin-top: 8px; text-align: center;">
+          <span style="display: inline-block; padding: 6px 16px; background: linear-gradient(135deg, #FDF8F3 0%, #F5EFE7 100%); border-radius: 20px; font-size: 12px; color: #5D4E37; border: 1px solid rgba(193, 127, 89, 0.3);">
+            🏅 完整路線：${data.fullRouteLabel}
+          </span>
+        </div>
+        ` : ''}
         ` : ''}
 
         <!-- 底部區域：公司品牌 + 頁碼 -->
@@ -539,14 +571,29 @@ export class PdfGenerator {
 
         ${branchInfo ? `
         <!-- 探索路線 -->
-        <div style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-radius: 12px; padding: 14px; border: 1px solid rgba(33, 150, 243, 0.2);">
+        <div style="background: linear-gradient(135deg, ${branchInfo.color}15 0%, ${branchInfo.color}25 100%); border-radius: 12px; padding: 14px; border: 1px solid ${branchInfo.color}40;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);">${branchInfo.icon}</div>
-            <div>
-              <h4 style="margin: 0; color: #1565C0; font-size: 14px; font-weight: bold;">您選擇的探索路線</h4>
+            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${branchInfo.color} 0%, ${branchInfo.color}DD 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 3px 10px ${branchInfo.color}50;">${branchInfo.icon}</div>
+            <div style="flex: 1;">
+              <h4 style="margin: 0; color: ${branchInfo.color}; font-size: 14px; font-weight: bold;">您選擇的探索路線</h4>
               <p style="margin: 4px 0 0 0; color: #5D4E37; font-size: 13px;">${branchInfo.name} - ${branchInfo.desc}</p>
             </div>
+            ${data.riasecVariant && riasecVariantNames[data.riasecVariant] ? (() => {
+              const vInfo = riasecVariantNames[data.riasecVariant!]!
+              return `
+            <div style="text-align: right;">
+              <span style="display: inline-block; padding: 5px 12px; background: ${vInfo.color}20; border-radius: 15px; font-size: 12px; color: ${vInfo.color}; font-weight: bold;">
+                ${vInfo.icon} ${vInfo.name}
+              </span>
+            </div>
+            `
+            })() : ''}
           </div>
+          ${data.fullRouteLabel ? `
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed ${branchInfo.color}40; text-align: center;">
+            <span style="font-size: 13px; color: #5D4E37;">🏅 完整路線組合：<strong style="color: ${branchInfo.color};">${data.fullRouteLabel}</strong></span>
+          </div>
+          ` : ''}
         </div>
         ` : ''}
 

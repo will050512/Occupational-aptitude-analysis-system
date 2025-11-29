@@ -396,8 +396,8 @@ async function downloadRecordPdf(record: GameResult) {
 }
 
 .clear-btn:hover {
-  color: #E53935;
-  background: rgba(229, 57, 53, 0.1);
+  color: var(--color-error-dark);
+  background: var(--color-error-bg);
 }
 
 .header-spacer {
@@ -440,8 +440,8 @@ async function downloadRecordPdf(record: GameResult) {
 }
 
 .stat-value.primary { color: var(--color-primary); }
-.stat-value.success { color: #66BB6A; }
-.stat-value.info { color: #42A5F5; }
+.stat-value.success { color: var(--disc-S); }
+.stat-value.info { color: var(--disc-C); }
 
 .stat-name {
   font-size: var(--text-xs);
@@ -547,10 +547,10 @@ async function downloadRecordPdf(record: GameResult) {
   font-weight: 500;
 }
 
-.disc-D { background: #FFEBEE; color: #C62828; }
-.disc-I { background: #FFF8E1; color: #F9A825; }
-.disc-S { background: #E8F5E9; color: #2E7D32; }
-.disc-C { background: #E3F2FD; color: #1565C0; }
+.disc-D { background: var(--disc-D-bg); color: var(--disc-D-dark); }
+.disc-I { background: var(--disc-I-bg); color: var(--disc-I-dark); }
+.disc-S { background: var(--disc-S-bg); color: var(--disc-S-dark); }
+.disc-C { background: var(--disc-C-bg); color: var(--disc-C-dark); }
 
 /* Record Card Expanded State */
 .record-card.is-expanded {
@@ -807,15 +807,323 @@ async function downloadRecordPdf(record: GameResult) {
   }
 }
 
-/* Responsive */
+/* ========================================
+   響應式增強
+   ======================================== */
+
+/* 超小螢幕 (<380px) */
+@media (max-width: 379px) {
+  .header-inner {
+    padding: var(--spacing-sm);
+  }
+  
+  .header-title {
+    font-size: var(--text-base);
+  }
+  
+  .stats-grid {
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-value {
+    font-size: var(--text-xl);
+  }
+  
+  .record-icon {
+    font-size: 1.5rem;
+  }
+  
+  .record-type-name {
+    font-size: var(--text-sm);
+  }
+  
+  .disc-summary {
+    flex-wrap: wrap;
+  }
+  
+  .disc-score {
+    flex: 1 0 calc(50% - var(--spacing-xs));
+  }
+}
+
+/* 平板 (≥768px) */
 @media (min-width: 768px) {
-  .stats-card,
-  .record-card {
+  .records-page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .records-header {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .header-inner {
+    max-width: 750px;
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+  
+  .header-title {
+    font-size: var(--text-xl);
+  }
+  
+  .records-main {
+    max-width: 750px;
     padding: var(--spacing-xl);
+  }
+  
+  .stats-card {
+    padding: var(--spacing-xl);
+  }
+  
+  .stats-grid {
+    gap: var(--spacing-xl);
+  }
+  
+  .stat-value {
+    font-size: var(--text-3xl);
+  }
+  
+  .stat-name {
+    font-size: var(--text-sm);
+  }
+  
+  .record-card {
+    padding: var(--spacing-lg);
   }
   
   .record-content {
     padding: var(--spacing-lg);
+  }
+  
+  .record-icon {
+    font-size: 2.5rem;
+  }
+  
+  .record-type-name {
+    font-size: var(--text-lg);
+  }
+  
+  .disc-summary {
+    max-width: 400px;
+  }
+  
+  .choices-list {
+    max-height: 320px;
+  }
+  
+  .choice-item {
+    grid-template-columns: 40px 1fr;
+    padding: var(--spacing-md);
+  }
+  
+  .bottom-inner {
+    max-width: 750px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .new-test-btn {
+    max-width: 300px;
+  }
+}
+
+/* 桌面 (≥1024px) */
+@media (min-width: 1024px) {
+  .records-page {
+    max-width: 1000px;
+  }
+  
+  .header-inner,
+  .records-main,
+  .bottom-inner {
+    max-width: 900px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .history-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .record-card {
+    height: fit-content;
+  }
+  
+  .record-card.is-expanded {
+    grid-column: span 2;
+  }
+}
+
+/* 寬螢幕 (≥1280px) */
+@media (min-width: 1280px) {
+  .records-page {
+    max-width: 1200px;
+  }
+  
+  .header-inner,
+  .records-main,
+  .bottom-inner {
+    max-width: 1100px;
+  }
+  
+  .history-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .record-card.is-expanded {
+    grid-column: span 3;
+  }
+}
+
+/* 橫向模式 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .records-header {
+    padding: var(--spacing-xs) 0;
+  }
+  
+  .header-inner {
+    padding: var(--spacing-xs) var(--spacing-md);
+  }
+  
+  .records-main {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .stats-card {
+    padding: var(--spacing-md);
+  }
+  
+  .stats-grid {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xl);
+  }
+  
+  .stat-value {
+    font-size: var(--text-xl);
+  }
+  
+  .history-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .choices-list {
+    max-height: 150px;
+  }
+  
+  .bottom-bar {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* ========================================
+   深色模式支援
+   ======================================== */
+:root.dark-mode .records-page {
+  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+:root.dark-mode .records-header {
+  background: rgba(26, 26, 46, 0.95);
+  border-bottom-color: var(--color-bg-tertiary);
+}
+
+:root.dark-mode .stats-card {
+  background: var(--color-bg-card);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .record-card {
+  background: var(--color-bg-card);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .record-card.is-expanded {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .record-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark-mode .record-expanded {
+  border-top-color: var(--color-bg-tertiary);
+}
+
+:root.dark-mode .choice-item {
+  background: var(--color-bg-secondary);
+}
+
+/* DISC 顏色現在透過 theme.css 的 CSS 變數自動切換 */
+
+:root.dark-mode .bottom-bar {
+  background: rgba(26, 26, 46, 0.95);
+  border-top-color: var(--color-bg-tertiary);
+}
+
+:root.dark-mode .clear-btn:hover {
+  color: var(--color-error-light);
+  background: var(--color-error-bg);
+}
+
+/* 深色模式媒體查詢 */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) .records-page {
+    background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  }
+  
+  :root:not(.light-mode) .records-header {
+    background: rgba(26, 26, 46, 0.95);
+    border-bottom-color: var(--color-bg-tertiary);
+  }
+  
+  :root:not(.light-mode) .stats-card,
+  :root:not(.light-mode) .record-card {
+    background: var(--color-bg-card);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  :root:not(.light-mode) .choice-item {
+    background: var(--color-bg-secondary);
+  }
+  
+  /* DISC 顏色透過 CSS 變數自動切換 */
+  
+  :root:not(.light-mode) .bottom-bar {
+    background: rgba(26, 26, 46, 0.95);
+    border-top-color: var(--color-bg-tertiary);
+  }
+}
+
+/* 列印樣式 */
+@media print {
+  .records-header,
+  .bottom-bar,
+  .btn-download-pdf {
+    display: none;
+  }
+  
+  .records-page {
+    background: white;
+    padding-bottom: 0;
+  }
+  
+  .record-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .record-card.is-expanded {
+    page-break-inside: avoid;
   }
 }
 </style>

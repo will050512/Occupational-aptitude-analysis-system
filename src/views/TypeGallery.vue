@@ -596,8 +596,8 @@ const totalCount = allTypes.length
   flex-shrink: 0;
 }
 
-.trait-dot.strength { background: #66BB6A; }
-.trait-dot.growth { background: #FF9800; }
+.trait-dot.strength { background: var(--disc-S); }
+.trait-dot.growth { background: var(--color-warning); }
 
 .career-tags {
   display: flex;
@@ -615,7 +615,7 @@ const totalCount = allTypes.length
 
 .advice-section {
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  background: linear-gradient(135deg, var(--color-info-bg) 0%, var(--color-info-light) 100%);
   border-radius: var(--radius-lg);
 }
 
@@ -658,6 +658,285 @@ const totalCount = allTypes.length
   
   .modal-content {
     padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom));
+  }
+}
+
+/* ========================================
+   響應式增強
+   ======================================== */
+
+/* 超小螢幕 (<380px) */
+@media (max-width: 379px) {
+  .header-inner {
+    padding: var(--spacing-sm);
+  }
+  
+  .header-title {
+    font-size: var(--text-base);
+  }
+  
+  .type-grid {
+    gap: var(--spacing-xs);
+  }
+  
+  .card-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .type-icon {
+    font-size: 2rem;
+  }
+  
+  .type-name {
+    font-size: var(--text-xs);
+  }
+  
+  .filter-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--text-xs);
+  }
+}
+
+/* 平板 (≥768px) */
+@media (min-width: 768px) {
+  .gallery-header {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .header-inner {
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+  
+  .header-title {
+    font-size: var(--text-xl);
+  }
+  
+  .filter-container {
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+  
+  .filter-btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--text-base);
+  }
+  
+  .gallery-main {
+    padding: 0 var(--spacing-xl) var(--spacing-3xl);
+  }
+  
+  .disc-title {
+    font-size: var(--text-xl);
+  }
+  
+  .type-card {
+    border-radius: var(--radius-xl);
+  }
+  
+  .card-content {
+    padding: var(--spacing-lg);
+  }
+  
+  .type-icon {
+    font-size: 3rem;
+  }
+  
+  .type-name {
+    font-size: var(--text-base);
+  }
+  
+  .type-tagline {
+    font-size: var(--text-sm);
+    -webkit-line-clamp: 2;
+  }
+}
+
+/* 桌面 (≥1024px) */
+@media (min-width: 1024px) {
+  .gallery-page {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .header-inner,
+  .filter-container,
+  .gallery-main {
+    max-width: 1100px;
+  }
+  
+  .type-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .type-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+  
+  .modal-card {
+    max-width: 600px;
+  }
+}
+
+/* 寬螢幕 (≥1280px) */
+@media (min-width: 1280px) {
+  .type-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .card-content {
+    padding: var(--spacing-xl);
+  }
+  
+  .type-icon {
+    font-size: 3.5rem;
+  }
+}
+
+/* 橫向模式 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .gallery-header {
+    padding: var(--spacing-xs) 0;
+  }
+  
+  .header-inner {
+    padding: var(--spacing-xs) var(--spacing-md);
+  }
+  
+  .modal-overlay {
+    align-items: center;
+    padding: var(--spacing-sm);
+  }
+  
+  .modal-card {
+    max-height: 95vh;
+    border-radius: var(--radius-xl);
+    flex-direction: row;
+  }
+  
+  .modal-header {
+    width: 35%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    width: 65%;
+    max-height: 95vh;
+  }
+}
+
+/* ========================================
+   深色模式支援
+   ======================================== */
+:root.dark-mode .gallery-page {
+  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+}
+
+:root.dark-mode .gallery-header {
+  background: rgba(26, 26, 46, 0.95);
+  border-bottom-color: var(--color-bg-tertiary);
+}
+
+:root.dark-mode .filter-btn {
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+}
+
+:root.dark-mode .filter-btn:hover {
+  background: var(--color-bg-tertiary);
+}
+
+:root.dark-mode .filter-btn.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+:root.dark-mode .type-card {
+  background: var(--color-bg-card);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .type-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .type-name {
+  color: var(--color-text-primary);
+}
+
+:root.dark-mode .type-tagline {
+  color: var(--color-text-muted);
+}
+
+:root.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:root.dark-mode .modal-card {
+  background: var(--color-bg-card);
+}
+
+:root.dark-mode .career-tag {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+:root.dark-mode .advice-section {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%);
+}
+
+/* 深色模式媒體查詢 */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) .gallery-page {
+    background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  }
+  
+  :root:not(.light-mode) .gallery-header {
+    background: rgba(26, 26, 46, 0.95);
+    border-bottom-color: var(--color-bg-tertiary);
+  }
+  
+  :root:not(.light-mode) .filter-btn {
+    background: var(--color-bg-card);
+    color: var(--color-text-secondary);
+  }
+  
+  :root:not(.light-mode) .type-card {
+    background: var(--color-bg-card);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  :root:not(.light-mode) .modal-card {
+    background: var(--color-bg-card);
+  }
+  
+  :root:not(.light-mode) .career-tag {
+    background: var(--color-bg-tertiary);
+  }
+  
+  :root:not(.light-mode) .advice-section {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, rgba(33, 150, 243, 0.1) 100%);
+  }
+}
+
+/* 列印樣式 */
+@media print {
+  .gallery-header,
+  .filter-container {
+    display: none;
+  }
+  
+  .type-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .type-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
   }
 }
 </style>

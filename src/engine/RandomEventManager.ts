@@ -1,9 +1,12 @@
 /**
  * 隨機事件管理器
  * 管理隨機事件的觸發邏輯、機率計算、排除規則
+ * 
+ * v2.0 擴展：支援分支專屬事件
  */
 
 import { getRandomEvent, type RandomEvent } from '../data/random-events'
+import type { BranchType } from '../data/branches/types'
 
 /**
  * 隨機事件觸發設定
@@ -90,9 +93,25 @@ export class RandomEventManager {
   private config: RandomEventConfig
   private triggeredEventIds: string[] = []
   private eventChoices: EventChoiceRecord[] = []
+  /** 當前分支（用於分支專屬事件） */
+  private currentBranch: BranchType | null = null
 
   constructor(config: Partial<RandomEventConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config }
+  }
+
+  /**
+   * 設定當前分支
+   */
+  setCurrentBranch(branch: BranchType | null): void {
+    this.currentBranch = branch
+  }
+
+  /**
+   * 取得當前分支
+   */
+  getCurrentBranch(): BranchType | null {
+    return this.currentBranch
   }
 
   /**
@@ -124,7 +143,7 @@ export class RandomEventManager {
    * @returns 隨機事件或 null
    */
   getNextEvent(): RandomEvent | null {
-    return getRandomEvent(this.triggeredEventIds)
+    return getRandomEvent(this.triggeredEventIds, this.currentBranch)
   }
 
   /**
@@ -184,6 +203,7 @@ export class RandomEventManager {
   reset(): void {
     this.triggeredEventIds = []
     this.eventChoices = []
+    this.currentBranch = null
   }
 
   /**
@@ -192,9 +212,11 @@ export class RandomEventManager {
   restore(state: {
     triggeredEventIds: string[]
     eventChoices: EventChoiceRecord[]
+    currentBranch?: BranchType | null
   }): void {
     this.triggeredEventIds = state.triggeredEventIds
     this.eventChoices = state.eventChoices
+    this.currentBranch = state.currentBranch ?? null
   }
 
   /**
@@ -203,10 +225,12 @@ export class RandomEventManager {
   exportState(): {
     triggeredEventIds: string[]
     eventChoices: EventChoiceRecord[]
+    currentBranch: BranchType | null
   } {
     return {
       triggeredEventIds: [...this.triggeredEventIds],
-      eventChoices: [...this.eventChoices]
+      eventChoices: [...this.eventChoices],
+      currentBranch: this.currentBranch
     }
   }
 

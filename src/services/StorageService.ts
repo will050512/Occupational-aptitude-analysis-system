@@ -1,11 +1,29 @@
 /**
  * 本地存儲服務
  * 管理遊戲存檔、歷史結果、已解鎖類型等數據
+ * 
+ * v2.0: 新增版本管理，版本變更時自動重置進度
  */
 
 import type { BranchType } from '@/data/chapters'
+import type { RiasecVariant, FullBranchType } from '@/data/branches/types'
 import type { EventChoiceRecord } from '@/engine/RandomEventManager'
 import type { InteractiveResult } from '@/utils/InteractiveScoring'
+
+/**
+ * 應用程式版本號
+ * 當此版本號變更時，會自動清除遊戲進度（但保留歷史和解鎖）
+ * 格式：major.minor.patch
+ * - major: 重大架構變更（清除所有資料）
+ * - minor: 功能變更（清除進度）
+ * - patch: 小修正（不清除）
+ */
+export const APP_VERSION = '2.0.0'
+
+/**
+ * 版本變更策略
+ */
+export type VersionChangeStrategy = 'none' | 'clearProgress' | 'clearAll'
 
 const STORAGE_KEYS = {
   SESSION_ID: 'neocity_session_id',
@@ -14,6 +32,7 @@ const STORAGE_KEYS = {
   GAME_HISTORY: 'neocity_game_history',
   UNLOCKED_TYPES: 'neocity_unlocked_types',
   USER_PREFERENCES: 'neocity_user_preferences',
+  APP_VERSION: 'neocity_app_version',
 } as const
 
 export interface GameProgress {
@@ -25,6 +44,10 @@ export interface GameProgress {
   lastUpdatedAt: string
   /** 目前所在的分支路線 */
   currentBranch?: BranchType | null
+  /** RIASEC 變體 */
+  currentVariant?: RiasecVariant | null
+  /** 完整分支類型 */
+  fullBranch?: FullBranchType | null
   /** 分支路線內的場景索引 */
   branchSceneIndex?: number
   /** 已觸發的隨機事件 ID */
@@ -35,6 +58,22 @@ export interface GameProgress {
   interactiveResults?: InteractiveResult[]
   /** 累計 DISC 分數 */
   discScores?: { D: number; I: number; S: number; C: number }
+  /** 累計 RIASEC 分數 */
+  riasecScores?: { R: number; I: number; A: number; S: number; E: number; C: number }
+  /** 場景歷史（支援「上一步」功能） */
+  sceneHistory?: SceneHistoryEntry[]
+  /** 儲存時的應用版本 */
+  appVersion?: string
+}
+
+/**
+ * 場景歷史記錄項
+ */
+export interface SceneHistoryEntry {
+  sceneId: string
+  choiceId?: string
+  choiceText?: string
+  timestamp: number
 }
 
 export interface ChoiceRecord {
@@ -64,6 +103,88 @@ export interface UserPreferences {
 }
 
 export class StorageService {
+  /**
+   * 初始化存儲服務
+   * 應在應用啟動時呼叫，檢查版本並執行必要的清理
+   */
+  static initialize(): VersionChangeStrategy {
+    const strategy = this.checkVersionChange()
+    
+    if (strategy === 'clearAll') {
+      console.log(`[StorageService] Major version change detected, clearing all data`)
+      this.clearAll()
+    } else if (strategy === 'clearProgress') {
+      console.log(`[StorageService] Minor version change detected, clearing progress`)
+      this.clearCurrentProgress()
+    }
+    
+    // 更新存儲的版本號
+    localStorage.setItem(STORAGE_KEYS.APP_VERSION, APP_VERSION)
+    
+    return strategy
+  }
+
+  /**
+   * 檢查版本變更
+   * @returns 需要執行的清理策略
+   */
+  static checkVersionChange(): VersionChangeStrategy {
+    const storedVersion = localStorage.getItem(STORAGE_KEYS.APP_VERSION)
+    
+    // 首次安裝，無需清理
+    if (!storedVersion) {
+      return 'none'
+    }
+    
+    // 版本相同，無需清理
+    if (storedVersion === APP_VERSION) {
+      return 'none'
+    }
+    
+    // 解析版本號
+    const stored = this.parseVersion(storedVersion)
+    const current = this.parseVersion(APP_VERSION)
+    
+    // Major 版本變更：清除所有資料
+    if (current.major > stored.major) {
+      return 'clearAll'
+    }
+    
+    // Minor 版本變更：只清除進度
+    if (current.minor > stored.minor) {
+      return 'clearProgress'
+    }
+    
+    // Patch 版本或其他：不清除
+    return 'none'
+  }
+
+  /**
+   * 解析版本號
+   */
+  private static parseVersion(version: string): { major: number; minor: number; patch: number } {
+    const parts = version.split('.').map(p => parseInt(p, 10) || 0)
+    return {
+      major: parts[0] || 0,
+      minor: parts[1] || 0,
+      patch: parts[2] || 0
+    }
+  }
+
+  /**
+   * 獲取當前應用版本
+   */
+  static getAppVersion(): string {
+    return APP_VERSION
+  }
+
+  /**
+   * 獲取存儲的版本
+   */
+  static getStoredVersion(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.APP_VERSION)
+  }
+
   /**
    * Session ID 管理
    */
@@ -126,6 +247,8 @@ export class StorageService {
       choices: [],
       startedAt: new Date().toISOString(),
       lastUpdatedAt: new Date().toISOString(),
+      sceneHistory: [],
+      appVersion: APP_VERSION,
     }
     this.saveProgress(progress)
     return progress
@@ -133,6 +256,49 @@ export class StorageService {
 
   static clearCurrentProgress(): void {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_PROGRESS)
+  }
+
+  /**
+   * 添加場景到歷史記錄
+   */
+  static addSceneToHistory(entry: SceneHistoryEntry): void {
+    const progress = this.getCurrentProgress()
+    if (progress) {
+      if (!progress.sceneHistory) {
+        progress.sceneHistory = []
+      }
+      progress.sceneHistory.push(entry)
+      this.saveProgress(progress)
+    }
+  }
+
+  /**
+   * 從歷史記錄中移除最後一個場景（用於「上一步」）
+   */
+  static popSceneFromHistory(): SceneHistoryEntry | null {
+    const progress = this.getCurrentProgress()
+    if (progress && progress.sceneHistory && progress.sceneHistory.length > 0) {
+      const entry = progress.sceneHistory.pop()
+      this.saveProgress(progress)
+      return entry || null
+    }
+    return null
+  }
+
+  /**
+   * 獲取場景歷史
+   */
+  static getSceneHistory(): SceneHistoryEntry[] {
+    const progress = this.getCurrentProgress()
+    return progress?.sceneHistory || []
+  }
+
+  /**
+   * 檢查是否可以返回上一步
+   */
+  static canGoBack(): boolean {
+    const history = this.getSceneHistory()
+    return history.length > 1 // 至少要有兩個場景才能返回
   }
 
   static addChoice(choice: ChoiceRecord): void {

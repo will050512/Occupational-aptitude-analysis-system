@@ -1,79 +1,282 @@
+/* ========================================
+   新語市：職涯探索 - 全域樣式
+   整合設計系統的基礎樣式
+   ======================================== */
+
+/* 基礎設定 */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* 根元素 */
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
 }
 
+/* 減少動畫偏好時禁用平滑滾動 */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* body 基礎樣式 */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  /* 解決 iOS Safari 的彈跳問題 */
+  overscroll-behavior: none;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.card {
-  padding: 2em;
-}
-
+/* App 容器 */
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* 全域連結樣式 */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition-fast, 150ms);
+}
+
+a:hover {
+  color: var(--color-primary, #E07B54);
+}
+
+/* 全域按鈕重置 */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 全域輸入框重置 */
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* 圖片預設 */
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* 焦點可見性樣式 */
+:focus-visible {
+  outline: 2px solid var(--color-primary, #E07B54);
+  outline-offset: 2px;
+}
+
+/* 選取樣式 */
+::selection {
+  background-color: var(--color-primary-light, #F4A77C);
+  color: var(--color-text-primary, #3D3D3D);
+}
+
+/* ========================================
+   滾動條樣式
+   ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary, #F5EDE4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary, #EBE3D9);
+  border-radius: 4px;
+  transition: background var(--transition-fast, 150ms);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted, #9B9B9B);
+}
+
+/* 深色模式滾動條 */
+:root.dark-mode ::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+:root.dark-mode ::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary);
+}
+
+:root.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) ::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
   }
-  a:hover {
-    color: #747bff;
+  
+  :root:not(.light-mode) ::-webkit-scrollbar-thumb {
+    background: var(--color-bg-tertiary);
   }
+}
+
+/* ========================================
+   全域工具類
+   ======================================== */
+
+/* 隱藏元素但保持可訪問性 */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* 完全隱藏 */
+.hidden {
+  display: none !important;
+}
+
+/* 響應式隱藏 */
+@media (max-width: 479px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .hide-tablet {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* 文字截斷 */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Flex 工具 */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   iOS 特定修復
+   ======================================== */
+@supports (-webkit-touch-callout: none) {
+  /* iOS 輸入框縮放修復 */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+  
+  /* iOS 按鈕樣式重置 */
+  input[type="submit"],
+  input[type="button"],
   button {
-    background-color: #f9f9f9;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* ========================================
+   列印樣式
+   ======================================== */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+  
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
   }
 }

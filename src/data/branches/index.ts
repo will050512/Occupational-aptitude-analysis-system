@@ -1,6 +1,8 @@
 /**
  * 分支路線索引
  * 匯出分支載入函數與元資料
+ * 
+ * v2.0: 支援 5 主線 × 6 RIASEC 變體
  */
 
 import type { Scene } from '../chapters/chapter1'
@@ -9,37 +11,56 @@ import type { BranchChapter, InteractiveScene } from './types'
 import { entrepreneurBranch } from './entrepreneur-branch'
 import { teamworkBranch } from './teamwork-branch'
 import { specialistBranch } from './specialist-branch'
+import { creativeBranch } from './creative-branch'
+import { publicBranch } from './public-branch'
 
 // 從 types.ts 重新匯出所有類型
 export * from './types'
 
 /**
  * 所有分支資料映射
+ * v2.0: 已完成 5 條主線分支
  */
 const branchData: Record<BranchType, BranchChapter> = {
   entrepreneur: entrepreneurBranch,
   teamwork: teamworkBranch,
-  specialist: specialistBranch
+  specialist: specialistBranch,
+  creative: creativeBranch,
+  public: publicBranch
+}
+
+/**
+ * 檢查分支是否已實作（v2.0 後皆已完成）
+ */
+export function isBranchImplemented(_branch: BranchType): boolean {
+  return true
+}
+
+/**
+ * 獲取所有已實作的分支類型
+ */
+export function getImplementedBranches(): BranchType[] {
+  return Object.keys(branchData) as BranchType[]
 }
 
 /**
  * 獲取指定分支的所有場景
  */
 export function getBranchScenes(branch: BranchType): InteractiveScene[] {
-  return branchData[branch]?.scenes || []
+  return branchData[branch].scenes
 }
 
 /**
  * 獲取指定分支的結局場景
  */
-export function getBranchEnding(branch: BranchType): Scene | undefined {
-  return branchData[branch]?.ending
+export function getBranchEnding(branch: BranchType): Scene {
+  return branchData[branch].ending
 }
 
 /**
  * 獲取指定分支的章節資料
  */
-export function getBranchChapter(branch: BranchType): BranchChapter | undefined {
+export function getBranchChapter(branch: BranchType): BranchChapter {
   return branchData[branch]
 }
 
@@ -90,7 +111,7 @@ export function getBranchQuestionNumber(branch: BranchType, sceneId: string): nu
  */
 export function isBranchEndingScene(branch: BranchType, sceneId: string): boolean {
   const ending = getBranchEnding(branch)
-  return ending?.id === sceneId
+  return ending.id === sceneId
 }
 
 /**

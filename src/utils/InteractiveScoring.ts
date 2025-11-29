@@ -502,6 +502,18 @@ export class InteractiveScoring {
   }
 
   /**
+   * 移除特定題目的結果（用於返回功能）
+   */
+  removeResult(questionId: string): boolean {
+    const index = this.results.findIndex(r => r.questionId === questionId)
+    if (index >= 0) {
+      this.results.splice(index, 1)
+      return true
+    }
+    return false
+  }
+
+  /**
    * 匯出狀態
    */
   exportState(): InteractiveResult[] {

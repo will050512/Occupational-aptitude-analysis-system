@@ -13,24 +13,81 @@ import {
 } from 'chart.js'
 import { Radar } from 'vue-chartjs'
 import { riasecTypes, riasecHexagonOrder, type RiasecType } from '@/data/riasec-types'
+import type { BranchType } from '@/data/branches/types'
 
 // 註冊 Chart.js 組件
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+
+// 深色模式偵測
+const isDarkMode = ref(false)
+
+function updateDarkMode() {
+  isDarkMode.value = document.documentElement.classList.contains('dark-mode') ||
+    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches &&
+     !document.documentElement.classList.contains('light-mode'))
+}
+
+// 監聽深色模式變化
+let darkModeObserver: MutationObserver | null = null
 
 // Props
 interface Props {
   scores: Record<string, number>
   animated?: boolean
+  /** 當前分支（用於主題色彩） */
+  branch?: BranchType | null
+  /** 是否顯示入場動畫 */
+  showEntryAnimation?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  animated: true
+  animated: true,
+  branch: null,
+  showEntryAnimation: true
 })
 
 // Emits
 const emit = defineEmits<{
   (e: 'typeClick', type: RiasecType): void
 }>()
+
+// 分支主題色彩映射
+const branchColors: Record<BranchType, { primary: string; light: string }> = {
+  entrepreneur: {
+    primary: 'rgba(239, 68, 68, 0.85)',
+    light: 'rgba(239, 68, 68, 0.25)'
+  },
+  teamwork: {
+    primary: 'rgba(34, 197, 94, 0.85)',
+    light: 'rgba(34, 197, 94, 0.25)'
+  },
+  specialist: {
+    primary: 'rgba(59, 130, 246, 0.85)',
+    light: 'rgba(59, 130, 246, 0.25)'
+  },
+  creative: {
+    primary: 'rgba(168, 85, 247, 0.85)',
+    light: 'rgba(168, 85, 247, 0.25)'
+  },
+  public: {
+    primary: 'rgba(245, 158, 11, 0.85)',
+    light: 'rgba(245, 158, 11, 0.25)'
+  }
+}
+
+// 預設色彩（無分支時使用）
+const defaultColors = {
+  primary: 'rgba(99, 102, 241, 0.85)',
+  light: 'rgba(99, 102, 241, 0.25)'
+}
+
+// 取得當前主題色彩
+const currentThemeColors = computed(() => {
+  if (props.branch && branchColors[props.branch]) {
+    return branchColors[props.branch]
+  }
+  return defaultColors
+})
 
 // 工具函數：讀取 CSS 變數並解析為數字
 function getCssVarNumber(varName: string, fallback: number): number {
@@ -54,6 +111,7 @@ const containerRef = ref<HTMLElement | null>(null)
 const selectedType = ref<RiasecType | null>(null)
 const tooltipPosition = ref({ x: 0, y: 0 })
 const showTooltip = ref(false)
+const hasAnimatedIn = ref(false)
 
 // 響應式字體大小
 const radarLabelSize = ref(getCssVarNumber('--radar-label-size', 14))
@@ -114,7 +172,7 @@ const displayScores = computed(() => {
   return display
 })
 
-// Chart.js 資料 - 使用擴大差異後的分數
+// Chart.js 資料 - 使用擴大差異後的分數和主題色彩
 const chartData = computed<ChartData<'radar'>>(() => ({
   labels: riasecHexagonOrder.map(code => {
     const type = riasecTypes[code]
@@ -124,8 +182,8 @@ const chartData = computed<ChartData<'radar'>>(() => ({
     {
       label: '職業興趣分布',
       data: riasecHexagonOrder.map(code => displayScores.value[code] || 0),
-      backgroundColor: 'rgba(99, 102, 241, 0.25)',
-      borderColor: 'rgba(99, 102, 241, 0.85)',
+      backgroundColor: currentThemeColors.value.light,
+      borderColor: currentThemeColors.value.primary,
       borderWidth: 3,
       pointBackgroundColor: riasecHexagonOrder.map(code => riasecTypes[code]?.color || '#6366f1'),
       pointBorderColor: '#fff',
@@ -141,14 +199,26 @@ const chartData = computed<ChartData<'radar'>>(() => ({
   ]
 }))
 
-// Chart.js 選項
+// Chart.js 選項 - 增強動畫效果
 const chartOptions = computed<ChartOptions<'radar'>>(() => ({
   responsive: true,
   maintainAspectRatio: true,
   animation: props.animated ? {
-    duration: 1500,
-    easing: 'easeOutQuart'
+    duration: 1800,
+    easing: 'easeOutElastic' as const,
+    delay: (context) => {
+      // 為每個數據點添加漸進延遲
+      return context.dataIndex * 80
+    }
   } : false,
+  transitions: {
+    active: {
+      animation: {
+        duration: 400,
+        easing: 'easeOutCubic' as const
+      }
+    }
+  },
   plugins: {
     legend: {
       display: false
@@ -166,28 +236,28 @@ const chartOptions = computed<ChartOptions<'radar'>>(() => ({
         stepSize: 20,
         display: false,  // 隱藏刻度，因為我們使用擴大差異的顯示分數
         backdropColor: 'transparent',
-        color: '#6B7280',
+        color: isDarkMode.value ? '#9CA3AF' : '#6B7280',
         font: {
           size: radarTickSize.value,
           weight: 'bold' as const
         }
       },
       grid: {
-        color: 'rgba(156, 163, 175, 0.4)',
+        color: isDarkMode.value ? 'rgba(156, 163, 175, 0.25)' : 'rgba(156, 163, 175, 0.4)',
         circular: false,
         lineWidth: 1.5
       },
       angleLines: {
-        color: 'rgba(156, 163, 175, 0.4)',
+        color: isDarkMode.value ? 'rgba(156, 163, 175, 0.25)' : 'rgba(156, 163, 175, 0.4)',
         lineWidth: 1.5
       },
       pointLabels: {
-        color: '#1F2937',
+        color: isDarkMode.value ? '#E5E7EB' : '#1F2937',
         font: {
           size: radarLabelSize.value,
           weight: 'bold' as const
         },
-        padding: 18,
+        padding: 25,
         // 在標籤中顯示實際百分比
         callback: function(value: string, index: number) {
           const code = riasecHexagonOrder[index]
@@ -258,17 +328,62 @@ function handleClickOutside(event: MouseEvent) {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   
+  // 初始化深色模式偵測
+  updateDarkMode()
+  
+  // 監聽 HTML class 變化來偵測深色模式切換
+  darkModeObserver = new MutationObserver(() => {
+    const wasDark = isDarkMode.value
+    updateDarkMode()
+    if (wasDark !== isDarkMode.value) {
+      // 深色模式變化時更新圖表
+      const radarInstance = chartRef.value as { chart?: { update: (mode?: string) => void } } | null
+      if (radarInstance?.chart) {
+        radarInstance.chart.update()
+      }
+    }
+  })
+  darkModeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+  
+  // 監聽系統主題變化
+  const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  darkModeMediaQuery.addEventListener('change', () => {
+    updateDarkMode()
+    const radarInstance = chartRef.value as { chart?: { update: (mode?: string) => void } } | null
+    if (radarInstance?.chart) {
+      radarInstance.chart.update()
+    }
+  })
+  
   // 設置 ResizeObserver 監聽視窗變化
   resizeObserver = new ResizeObserver(debouncedUpdateCssVars)
   resizeObserver.observe(document.documentElement)
   
-  // 監聽媒體查詢變化
+  // 監聯媒體查詢變化
   const mediaQuery = window.matchMedia('(min-width: 480px)')
   mediaQuery.addEventListener('change', debouncedUpdateCssVars)
+  
+  // 入場動畫延遲
+  if (props.showEntryAnimation) {
+    setTimeout(() => {
+      hasAnimatedIn.value = true
+    }, 100)
+  } else {
+    hasAnimatedIn.value = true
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  
+  // 清理深色模式監聽器
+  if (darkModeObserver) {
+    darkModeObserver.disconnect()
+    darkModeObserver = null
+  }
   
   // 清理 ResizeObserver
   if (resizeObserver) {
@@ -287,7 +402,14 @@ watch(() => props.scores, () => {
 </script>
 
 <template>
-  <div class="riasec-radar-chart" ref="containerRef">
+  <div 
+    class="riasec-radar-chart" 
+    :class="{ 
+      'animated-in': hasAnimatedIn,
+      [`branch-${branch}`]: branch 
+    }"
+    ref="containerRef"
+  >
     <div class="radar-chart-container">
       <Radar
         ref="chartRef"
@@ -380,21 +502,52 @@ watch(() => props.scores, () => {
 <style scoped>
 .riasec-radar-chart {
   width: 100%;
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.riasec-radar-chart.animated-in {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* 分支主題色彩 */
+.riasec-radar-chart.branch-entrepreneur .legend-item.active {
+  border-color: var(--branch-entrepreneur, #ef4444);
+}
+
+.riasec-radar-chart.branch-teamwork .legend-item.active {
+  border-color: var(--branch-teamwork, #22c55e);
+}
+
+.riasec-radar-chart.branch-specialist .legend-item.active {
+  border-color: var(--branch-specialist, #3b82f6);
+}
+
+.riasec-radar-chart.branch-creative .legend-item.active {
+  border-color: var(--branch-creative, #a855f7);
+}
+
+.riasec-radar-chart.branch-public .legend-item.active {
+  border-color: var(--branch-public, #f59e0b);
 }
 
 .radar-chart-container {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   margin: 0 auto;
-  padding: var(--spacing-md);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  /* 確保標籤文字不被裁切 */
+  overflow: visible;
 }
 
 /* Tooltip */
 .riasec-tooltip {
   position: absolute;
   transform: translate(-50%, -100%) translateY(-20px);
-  background: white;
+  background: var(--color-bg-card);
   border-radius: var(--radius-xl);
   padding: var(--spacing-lg);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
@@ -457,7 +610,7 @@ watch(() => props.scores, () => {
 .tooltip-score {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-full);
-  color: white;
+  color: var(--color-text-inverse);
   font-weight: 700;
   font-size: var(--text-sm);
 }
@@ -547,17 +700,36 @@ watch(() => props.scores, () => {
   border: 2px solid transparent;
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  transform: translateY(10px);
 }
+
+/* 圖例入場動畫 - 漸進顯示 */
+.riasec-radar-chart.animated-in .legend-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.riasec-radar-chart.animated-in .legend-item:nth-child(1) { transition-delay: 0.1s; }
+.riasec-radar-chart.animated-in .legend-item:nth-child(2) { transition-delay: 0.15s; }
+.riasec-radar-chart.animated-in .legend-item:nth-child(3) { transition-delay: 0.2s; }
+.riasec-radar-chart.animated-in .legend-item:nth-child(4) { transition-delay: 0.25s; }
+.riasec-radar-chart.animated-in .legend-item:nth-child(5) { transition-delay: 0.3s; }
+.riasec-radar-chart.animated-in .legend-item:nth-child(6) { transition-delay: 0.35s; }
 
 .legend-item:hover {
   background: var(--color-bg-tertiary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .legend-item.active {
   border-color: var(--color-primary);
-  background: white;
+  background: var(--color-bg-card);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 .legend-dot {
@@ -582,5 +754,68 @@ watch(() => props.scores, () => {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   font-weight: 600;
+}
+
+/* 深色模式樣式 */
+:root.dark-mode .riasec-tooltip {
+  background: var(--color-bg-card);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .tooltip-close {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+:root.dark-mode .tooltip-close:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+:root.dark-mode .legend-item {
+  background: var(--color-bg-secondary);
+}
+
+:root.dark-mode .legend-item:hover {
+  background: var(--color-bg-tertiary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .legend-item.active {
+  background: var(--color-bg-card);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode) .riasec-tooltip {
+    background: var(--color-bg-card);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  :root:not(.light-mode) .tooltip-close {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-muted);
+  }
+
+  :root:not(.light-mode) .tooltip-close:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+  }
+
+  :root:not(.light-mode) .legend-item {
+    background: var(--color-bg-secondary);
+  }
+
+  :root:not(.light-mode) .legend-item:hover {
+    background: var(--color-bg-tertiary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  :root:not(.light-mode) .legend-item.active {
+    background: var(--color-bg-card);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
 }
 </style>

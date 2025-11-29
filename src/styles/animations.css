@@ -573,6 +573,366 @@
 }
 
 /* ========================================
+   v2.0 增強版微互動動畫
+   ======================================== */
+
+/* 成功狀態動畫 */
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-successPop {
+  animation: successPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* 錯誤搖動動畫 */
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+.animate-errorShake {
+  animation: errorShake 0.6s ease-in-out;
+}
+
+/* 按鈕點擊波紋 */
+@keyframes buttonRipple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* 卡片懸浮提升 */
+@keyframes cardLift {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.animate-cardLift {
+  animation: cardLift 0.3s ease forwards;
+}
+
+/* 漸層流動效果 */
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradientFlow {
+  background-size: 200% 200%;
+  animation: gradientFlow 3s ease infinite;
+}
+
+/* 呼吸燈效果 */
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+/* 入場滑入效果 - 由左 */
+@keyframes slideEnterLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideEnterLeft {
+  animation: slideEnterLeft 0.4s ease-out forwards;
+}
+
+/* 入場滑入效果 - 由右 */
+@keyframes slideEnterRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideEnterRight {
+  animation: slideEnterRight 0.4s ease-out forwards;
+}
+
+/* 放大進入 */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-zoomIn {
+  animation: zoomIn 0.3s ease-out forwards;
+}
+
+/* 旋轉進入 */
+@keyframes spinIn {
+  from {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.animate-spinIn {
+  animation: spinIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* 數字翻轉 */
+@keyframes numberFlip {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+.animate-numberFlip {
+  animation: numberFlip 0.6s ease-in-out;
+  transform-style: preserve-3d;
+}
+
+/* 閃爍高亮 */
+@keyframes highlight {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(224, 123, 84, 0.2);
+  }
+}
+
+.animate-highlight {
+  animation: highlight 1s ease-in-out;
+}
+
+/* 骨架屏加載動畫 */
+@keyframes skeletonLoading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, 
+    var(--color-bg-tertiary) 0px, 
+    var(--color-bg-secondary) 40px, 
+    var(--color-bg-tertiary) 80px);
+  background-size: 200px 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* 打勾動畫 */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 50;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-checkmark {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: checkmark 0.4s ease-out forwards;
+}
+
+/* 進度環動畫 */
+@keyframes progressRing {
+  0% {
+    stroke-dashoffset: 283;
+  }
+}
+
+.animate-progressRing {
+  animation: progressRing 1s ease-out forwards;
+}
+
+/* Toast 進入 */
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toastEnter {
+  animation: toastEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Toast 離開 */
+@keyframes toastLeave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+}
+
+.animate-toastLeave {
+  animation: toastLeave 0.2s ease-in forwards;
+}
+
+/* 懸浮標籤 */
+@keyframes labelFloat {
+  from {
+    transform: translateY(0);
+    font-size: var(--text-base);
+  }
+  to {
+    transform: translateY(-24px);
+    font-size: var(--text-sm);
+  }
+}
+
+.animate-labelFloat {
+  animation: labelFloat 0.2s ease forwards;
+}
+
+/* 彈性彈跳 */
+@keyframes elasticBounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15); }
+  50% { transform: scale(0.9); }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-elasticBounce {
+  animation: elasticBounce 0.5s ease;
+}
+
+/* ========================================
+   交互式狀態動畫
+   ======================================== */
+
+/* 按鈕 hover 狀態 */
+.btn-animated {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-animated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-animated:hover::after {
+  transform: translateX(100%);
+}
+
+/* 卡片交互狀態 */
+.card-animated {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-animated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card-animated:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+/* 輸入框 focus 動畫 */
+.input-animated {
+  transition: all 0.2s ease;
+  border: 2px solid var(--color-bg-tertiary);
+}
+
+.input-animated:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(224, 123, 84, 0.1);
+}
+
+/* ========================================
+   交錯動畫 (Stagger)
+   ======================================== */
+.stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-enter > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-enter > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-enter > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-enter > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-enter > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-enter > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-enter > *:nth-child(8) { animation-delay: 350ms; }
+
+/* ========================================
    頁面過渡
    ======================================== */
 .page-enter-active,
